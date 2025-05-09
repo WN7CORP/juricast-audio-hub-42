@@ -1,17 +1,27 @@
 
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import PodcastCard from '@/components/podcast/PodcastCard';
-import { getFavoriteEpisodes } from '@/lib/mock-data';
+import { getFavoriteEpisodes } from '@/lib/podcast-service';
 
 const Favorites = () => {
-  const favoriteEpisodes = getFavoriteEpisodes();
+  const { data: favoriteEpisodes = [], isLoading } = useQuery({
+    queryKey: ['favoriteEpisodes'],
+    queryFn: getFavoriteEpisodes
+  });
 
   return (
     <MainLayout>
       <h1 className="text-2xl font-bold mb-6">Favoritos</h1>
 
-      {favoriteEpisodes.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="bg-juricast-card animate-pulse rounded-lg h-64"></div>
+          ))}
+        </div>
+      ) : favoriteEpisodes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {favoriteEpisodes.map(episode => (
             <PodcastCard
@@ -20,9 +30,9 @@ const Favorites = () => {
               title={episode.titulo}
               area={episode.area}
               description={episode.descricao}
-              date={episode.data_publicacao}
-              comments={episode.comentarios}
-              likes={episode.curtidas}
+              date={episode.data_publicacao || ''}
+              comments={episode.comentarios || 0}
+              likes={episode.curtidas || 0}
               thumbnail={episode.imagem_miniatura}
             />
           ))}

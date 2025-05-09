@@ -1,17 +1,27 @@
 
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
-import { getInProgressEpisodes } from '@/lib/mock-data';
+import { getInProgressEpisodes } from '@/lib/podcast-service';
 import { Link } from 'react-router-dom';
 
 const InProgress = () => {
-  const inProgressEpisodes = getInProgressEpisodes();
+  const { data: inProgressEpisodes = [], isLoading } = useQuery({
+    queryKey: ['inProgressEpisodes'],
+    queryFn: getInProgressEpisodes
+  });
 
   return (
     <MainLayout>
       <h1 className="text-2xl font-bold mb-6">Em Progresso</h1>
 
-      {inProgressEpisodes.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="bg-juricast-card animate-pulse rounded-lg h-24"></div>
+          ))}
+        </div>
+      ) : inProgressEpisodes.length > 0 ? (
         <div className="grid grid-cols-1 gap-4">
           {inProgressEpisodes.map(episode => (
             <Link 

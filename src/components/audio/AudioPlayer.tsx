@@ -2,20 +2,27 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { saveEpisodeProgress, getUserProgress } from '@/lib/podcast-service';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AudioPlayerProps {
   src: string;
   title: string;
   thumbnail?: string;
+  episodeId?: number;
 }
 
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, title, thumbnail }) => {
+const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, title, thumbnail, episodeId }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [waveformData, setWaveformData] = useState<number[]>([]);
-
+  const queryClient = useQueryClient();
+  
+  // Progress tracking
+  const progressTrackingInterval = useRef<number | null>(null);
+  
   // Generate random waveform data for visualization
   useEffect(() => {
     const generateWaveformData = () => {
@@ -25,6 +32,16 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, title, thumbnail }) => {
 
     generateWaveformData();
   }, [src]);
+  
+  // Load saved progress
+  useEffect(() => {
+    if (episodeId !== undefined) {
+      const savedProgress = getUserProgress(episodeId);
+      if (savedProgress && audioRef.current) {
+        audioRef.current.currentTime = savedProgress.lastPosition;
+      }
+    }
+  }, [episodeId]);
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -39,9 +56,53 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, title, thumbnail }) => {
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+      const currentTime = audioRef.current.currentTime;
+      const duration = audioRef.current.duration || 0;
+      setCurrentTime(currentTime);
+      
+      // Save progress if we have an episodeId
+      if (episodeId !== undefined) {
+        const progressPercent = duration > 0 ? Math.floor((currentTime / duration) * 100) : 0;
+        // Don't save continuously, only every 5 seconds
+        if (Math.floor(currentTime) % 5 === 0) {
+          saveEpisodeProgress(episodeId, progressPercent, currentTime);
+          
+          // Invalidate relevant queries
+          queryClient.invalidateQueries({ queryKey: ['inProgressEpisodes'] });
+        }
+      }
     }
   };
+  
+  // Set up progress tracking when playing
+  useEffect(() => {
+    if (isPlaying && episodeId !== undefined) {
+      // Clear any existing interval
+      if (progressTrackingInterval.current) {
+        window.clearInterval(progressTrackingInterval.current);
+      }
+      
+      // Set new interval
+      progressTrackingInterval.current = window.setInterval(() => {
+        if (audioRef.current) {
+          const currentTime = audioRef.current.currentTime;
+          const duration = audioRef.current.duration || 0;
+          const progressPercent = duration > 0 ? Math.floor((currentTime / duration) * 100) : 0;
+          saveEpisodeProgress(episodeId, progressPercent, currentTime);
+        }
+      }, 5000); // Save every 5 seconds
+    } else if (progressTrackingInterval.current) {
+      // Clear interval when not playing
+      window.clearInterval(progressTrackingInterval.current);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (progressTrackingInterval.current) {
+        window.clearInterval(progressTrackingInterval.current);
+      }
+    };
+  }, [isPlaying, episodeId]);
 
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
@@ -61,6 +122,14 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, title, thumbnail }) => {
         audioRef.current.duration,
         audioRef.current.currentTime + 10
       );
+    }
+  };
+  
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+    if (episodeId !== undefined) {
+      saveEpisodeProgress(episodeId, 100, audioRef.current?.duration || 0);
+      queryClient.invalidateQueries({ queryKey: ['inProgressEpisodes'] });
     }
   };
 
@@ -135,7 +204,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, title, thumbnail }) => {
         src={src} 
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => setIsPlaying(false)}
+        onEnded={handleAudioEnded}
         className="hidden"
       />
     </div>

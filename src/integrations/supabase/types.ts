@@ -1590,6 +1590,36 @@ export type Database = {
         }
         Relationships: []
       }
+      juricast: {
+        Row: {
+          area: string | null
+          descricao: string | null
+          id: number
+          imagem_miniatura: string | null
+          tag: string | null
+          titulo: string | null
+          url_audio: string | null
+        }
+        Insert: {
+          area?: string | null
+          descricao?: string | null
+          id?: number
+          imagem_miniatura?: string | null
+          tag?: string | null
+          titulo?: string | null
+          url_audio?: string | null
+        }
+        Update: {
+          area?: string | null
+          descricao?: string | null
+          id?: number
+          imagem_miniatura?: string | null
+          tag?: string | null
+          titulo?: string | null
+          url_audio?: string | null
+        }
+        Relationships: []
+      }
       law_article_comments: {
         Row: {
           article_number: string

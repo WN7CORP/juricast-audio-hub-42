@@ -1,15 +1,31 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { 
-  Headphones, 
-  Clock, 
-  Heart, 
-  List, 
-  BarChart2, 
-  BookOpen 
-} from 'lucide-react';
+import { Headphones, Clock, Heart, List, BarChart2, BookOpen } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+
+const fetchCategories = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('juricast')
+      .select('area')
+      .order('area', { ascending: true });
+
+    if (error) {
+      console.error("Error fetching categories:", error);
+      throw error;
+    }
+
+    // Extract unique areas
+    const areas = [...new Set(data?.map(item => item.area))];
+    return areas;
+  } catch (error) {
+    console.error("Error in fetchCategories:", error);
+    return [];
+  }
+};
 
 const SidebarLink = ({ 
   to, 
@@ -47,6 +63,11 @@ const Sidebar = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
   
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: fetchCategories
+  });
+  
   return (
     <div className="w-64 h-screen bg-juricast-background border-r border-juricast-card flex flex-col">
       <div className="p-5">
@@ -54,7 +75,7 @@ const Sidebar = () => {
         <p className="text-juricast-muted text-sm">Podcast Jurídico</p>
       </div>
       
-      <nav className="flex-1 px-4 py-2">
+      <nav className="flex-1 px-4 py-2 overflow-y-auto">
         <div className="mb-6">
           <SidebarLink to="/" icon={Headphones} label="Todos" active={isActive('/')} />
           <SidebarLink to="/em-progresso" icon={Clock} label="Em Progresso" active={isActive('/em-progresso')} />
@@ -70,9 +91,18 @@ const Sidebar = () => {
         
         <div className="mb-6">
           <h2 className="text-juricast-muted font-medium px-4 py-2">Categorias</h2>
-          <SidebarLink to="/categoria/direito-penal" icon={BookOpen} label="Direito Penal" count={3} active={isActive('/categoria/direito-penal')} />
-          <SidebarLink to="/categoria/direito-civil" icon={BookOpen} label="Direito Civil" count={2} active={isActive('/categoria/direito-civil')} />
-          <SidebarLink to="/categoria/direito-constitucional" icon={BookOpen} label="Direito Constitucional" count={1} active={isActive('/categoria/direito-constitucional')} />
+          {categories.map((category) => (
+            <SidebarLink 
+              key={category} 
+              to={`/categoria/${category.toLowerCase().replace(/\s+/g, '-')}`} 
+              icon={BookOpen} 
+              label={category}
+              active={isActive(`/categoria/${category.toLowerCase().replace(/\s+/g, '-')}`)} 
+            />
+          ))}
+          {categories.length === 0 && (
+            <p className="text-juricast-muted text-sm px-4 py-2">Nenhuma categoria disponível</p>
+          )}
         </div>
       </nav>
     </div>

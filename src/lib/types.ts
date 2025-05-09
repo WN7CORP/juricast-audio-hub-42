@@ -7,9 +7,20 @@ export interface PodcastEpisode {
   url_audio: string;
   imagem_miniatura: string;
   tag: string[];
-  data_publicacao: string;
-  comentarios: number;
-  curtidas: number;
+  data_publicacao?: string;
+  comentarios?: number;
+  curtidas?: number;
   progresso?: number;
   favorito?: boolean;
+}
+
+export interface UserProgress {
+  episodeId: number;
+  progress: number;
+  lastPosition: number;
+}
+
+export interface UserFavorite {
+  episodeId: number;
+  isFavorite: boolean;
 }

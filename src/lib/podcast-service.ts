@@ -1,0 +1,211 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import { PodcastEpisode, UserProgress, UserFavorite } from "./types";
+
+// Local storage keys
+const PROGRESS_STORAGE_KEY = 'juricast_progress';
+const FAVORITES_STORAGE_KEY = 'juricast_favorites';
+
+// Get all podcast episodes
+export async function getAllEpisodes(): Promise<PodcastEpisode[]> {
+  try {
+    const { data, error } = await supabase
+      .from('juricast')
+      .select('*');
+    
+    if (error) {
+      console.error("Error fetching episodes:", error);
+      throw error;
+    }
+
+    return formatEpisodes(data || []);
+  } catch (error) {
+    console.error("Error in getAllEpisodes:", error);
+    return [];
+  }
+}
+
+// Get episodes by area (category)
+export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]> {
+  try {
+    const { data, error } = await supabase
+      .from('juricast')
+      .select('*')
+      .eq('area', area);
+    
+    if (error) {
+      console.error(`Error fetching episodes for area ${area}:`, error);
+      throw error;
+    }
+
+    return formatEpisodes(data || []);
+  } catch (error) {
+    console.error(`Error in getEpisodesByArea for ${area}:`, error);
+    return [];
+  }
+}
+
+// Get episode by ID
+export async function getEpisodeById(id: number): Promise<PodcastEpisode | null> {
+  try {
+    const { data, error } = await supabase
+      .from('juricast')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      console.error(`Error fetching episode with id ${id}:`, error);
+      throw error;
+    }
+
+    if (!data) return null;
+    
+    return {
+      ...data,
+      tag: Array.isArray(data.tag) ? data.tag : [data.tag],
+      progresso: getUserProgress(data.id)?.progress || 0,
+      favorito: getUserFavorite(data.id)?.isFavorite || false,
+      comentarios: data.comentarios || 0,
+      curtidas: data.curtidas || 0,
+      data_publicacao: data.data_publicacao || new Date().toLocaleDateString('pt-BR')
+    };
+  } catch (error) {
+    console.error(`Error in getEpisodeById for ${id}:`, error);
+    return null;
+  }
+}
+
+// Get featured episodes (most liked)
+export function getFeaturedEpisodes(): Promise<PodcastEpisode[]> {
+  return getAllEpisodes().then(episodes => 
+    episodes
+      .sort((a, b) => (b.curtidas || 0) - (a.curtidas || 0))
+      .slice(0, 6)
+  );
+}
+
+// Get recent episodes
+export function getRecentEpisodes(): Promise<PodcastEpisode[]> {
+  return getAllEpisodes().then(episodes => 
+    episodes
+      .sort((a, b) => {
+        const dateA = a.data_publicacao ? new Date(a.data_publicacao).getTime() : 0;
+        const dateB = b.data_publicacao ? new Date(b.data_publicacao).getTime() : 0;
+        return dateB - dateA;
+      })
+      .slice(0, 6)
+  );
+}
+
+// Local storage for progress management
+export function saveEpisodeProgress(episodeId: number, progress: number, position: number = 0): void {
+  try {
+    const progressData = getProgressData();
+    progressData[episodeId] = { progress, lastPosition: position };
+    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progressData));
+  } catch (error) {
+    console.error("Error saving episode progress:", error);
+  }
+}
+
+export function getUserProgress(episodeId: number): UserProgress | null {
+  try {
+    const progressData = getProgressData();
+    return progressData[episodeId] || null;
+  } catch (error) {
+    console.error("Error getting user progress:", error);
+    return null;
+  }
+}
+
+export function getInProgressEpisodes(): Promise<PodcastEpisode[]> {
+  try {
+    const progressData = getProgressData();
+    const episodeIds = Object.keys(progressData).map(Number);
+    
+    return getAllEpisodes().then(episodes => 
+      episodes.filter(episode => 
+        episodeIds.includes(episode.id) && 
+        progressData[episode.id].progress > 0 && 
+        progressData[episode.id].progress < 100
+      )
+    );
+  } catch (error) {
+    console.error("Error getting in-progress episodes:", error);
+    return Promise.resolve([]);
+  }
+}
+
+// Local storage for favorites management
+export function toggleFavorite(episodeId: number): boolean {
+  try {
+    const favoritesData = getFavoritesData();
+    const isFavorite = favoritesData[episodeId]?.isFavorite || false;
+    
+    favoritesData[episodeId] = { isFavorite: !isFavorite };
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoritesData));
+    
+    return !isFavorite;
+  } catch (error) {
+    console.error("Error toggling favorite:", error);
+    return false;
+  }
+}
+
+export function getUserFavorite(episodeId: number): UserFavorite | null {
+  try {
+    const favoritesData = getFavoritesData();
+    return favoritesData[episodeId] || null;
+  } catch (error) {
+    console.error("Error getting user favorite:", error);
+    return null;
+  }
+}
+
+export function getFavoriteEpisodes(): Promise<PodcastEpisode[]> {
+  try {
+    const favoritesData = getFavoritesData();
+    const favoriteIds = Object.keys(favoritesData)
+      .map(Number)
+      .filter(id => favoritesData[id].isFavorite);
+    
+    return getAllEpisodes().then(episodes => 
+      episodes.filter(episode => favoriteIds.includes(episode.id))
+    );
+  } catch (error) {
+    console.error("Error getting favorite episodes:", error);
+    return Promise.resolve([]);
+  }
+}
+
+// Helper functions
+function getProgressData(): Record<number, UserProgress> {
+  try {
+    const data = localStorage.getItem(PROGRESS_STORAGE_KEY);
+    return data ? JSON.parse(data) : {};
+  } catch {
+    return {};
+  }
+}
+
+function getFavoritesData(): Record<number, UserFavorite> {
+  try {
+    const data = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    return data ? JSON.parse(data) : {};
+  } catch {
+    return {};
+  }
+}
+
+function formatEpisodes(episodes: any[]): PodcastEpisode[] {
+  return episodes.map(episode => ({
+    ...episode,
+    tag: Array.isArray(episode.tag) ? episode.tag : [episode.tag],
+    progresso: getUserProgress(episode.id)?.progress || 0,
+    favorito: getUserFavorite(episode.id)?.isFavorite || false,
+    comentarios: episode.comentarios || 0,
+    curtidas: episode.curtidas || 0,
+    data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR')
+  }));
+}

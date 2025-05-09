@@ -1,18 +1,67 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import AudioPlayer from '@/components/audio/AudioPlayer';
-import { getEpisodeById } from '@/lib/mock-data';
+import { getEpisodeById, toggleFavorite } from '@/lib/podcast-service';
 import { Heart, MessageSquare, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 const PodcastDetails = () => {
   const { id } = useParams<{id: string}>();
-  const episode = getEpisodeById(parseInt(id || '0'));
+  const queryClient = useQueryClient();
+  const episodeId = parseInt(id || '0');
+  
+  const { data: episode, isLoading } = useQuery({
+    queryKey: ['episode', episodeId],
+    queryFn: () => getEpisodeById(episodeId),
+    enabled: !!episodeId
+  });
   
   const [activeTab, setActiveTab] = useState<'visualizacao' | 'detalhes' | 'comentarios'>('visualizacao');
-  const [isFavorite, setIsFavorite] = useState(episode?.favorito || false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  
+  useEffect(() => {
+    if (episode) {
+      setIsFavorite(episode.favorito || false);
+    }
+  }, [episode]);
+  
+  const handleToggleFavorite = () => {
+    if (!episode) return;
+    
+    const newStatus = toggleFavorite(episode.id);
+    setIsFavorite(newStatus);
+    
+    // Invalidate queries to refresh data
+    queryClient.invalidateQueries({ queryKey: ['favoriteEpisodes'] });
+    queryClient.invalidateQueries({ queryKey: ['episode', episodeId] });
+    
+    toast({
+      title: newStatus ? "Adicionado aos favoritos" : "Removido dos favoritos",
+      description: newStatus ? "Este episódio foi adicionado à sua lista de favoritos." : "Este episódio foi removido da sua lista de favoritos.",
+    });
+  };
+  
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="animate-pulse space-y-8">
+          <div className="h-8 bg-juricast-card w-3/4 rounded"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <div className="bg-juricast-card rounded-lg p-6 h-96"></div>
+            </div>
+            <div className="lg:col-span-1">
+              <div className="bg-juricast-card rounded-lg p-6 h-64"></div>
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
   
   if (!episode) {
     return (
@@ -45,7 +94,7 @@ const PodcastDetails = () => {
                 <p className="text-juricast-accent">{episode.area}</p>
               </div>
               <button 
-                onClick={() => setIsFavorite(!isFavorite)}
+                onClick={handleToggleFavorite}
                 className={cn(
                   "p-2 rounded-full transition-colors",
                   isFavorite ? "text-red-500" : "text-juricast-muted hover:text-red-500"
@@ -101,7 +150,7 @@ const PodcastDetails = () => {
                 <div className="mb-4">
                   <h3 className="font-medium mb-2">Tags:</h3>
                   <div className="flex flex-wrap gap-2">
-                    {episode.tag.map((tag, index) => (
+                    {Array.isArray(episode.tag) && episode.tag.map((tag, index) => (
                       <span 
                         key={index}
                         className="bg-juricast-background px-3 py-1 rounded-full text-sm"
@@ -113,7 +162,7 @@ const PodcastDetails = () => {
                 </div>
                 <div>
                   <h3 className="font-medium mb-2">Data de publicação:</h3>
-                  <p className="text-juricast-muted">{episode.data_publicacao}</p>
+                  <p className="text-juricast-muted">{episode.data_publicacao || 'Não informada'}</p>
                 </div>
               </div>
             )}
@@ -122,10 +171,10 @@ const PodcastDetails = () => {
               <div>
                 <div className="flex items-center gap-2 mb-6">
                   <MessageSquare size={20} className="text-juricast-accent" />
-                  <span className="font-medium">{episode.comentarios} comentários</span>
+                  <span className="font-medium">{episode.comentarios || 0} comentários</span>
                 </div>
                 
-                {episode.comentarios > 0 ? (
+                {(episode.comentarios || 0) > 0 ? (
                   <div className="space-y-4">
                     {[...Array(2)].map((_, index) => (
                       <div key={index} className="bg-juricast-background p-4 rounded-lg">
@@ -155,6 +204,7 @@ const PodcastDetails = () => {
             src={episode.url_audio}
             title={episode.titulo}
             thumbnail={episode.imagem_miniatura}
+            episodeId={episode.id}
           />
 
           <div className="mt-6 bg-juricast-card rounded-lg p-4">
@@ -166,15 +216,15 @@ const PodcastDetails = () => {
               </li>
               <li className="flex justify-between">
                 <span className="text-juricast-muted">Publicado em:</span>
-                <span>{episode.data_publicacao}</span>
+                <span>{episode.data_publicacao || 'Não informado'}</span>
               </li>
               <li className="flex justify-between">
                 <span className="text-juricast-muted">Curtidas:</span>
-                <span>{episode.curtidas}</span>
+                <span>{episode.curtidas || 0}</span>
               </li>
               <li className="flex justify-between">
                 <span className="text-juricast-muted">Comentários:</span>
-                <span>{episode.comentarios}</span>
+                <span>{episode.comentarios || 0}</span>
               </li>
             </ul>
           </div>

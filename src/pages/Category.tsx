@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import PodcastCard from '@/components/podcast/PodcastCard';
-import { getEpisodesByArea } from '@/lib/mock-data';
+import { getEpisodesByArea } from '@/lib/podcast-service';
 
 const Category = () => {
   const { category } = useParams<{category: string}>();
@@ -15,13 +16,23 @@ const Category = () => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
   
-  const episodes = getEpisodesByArea(formattedCategory || '');
+  const { data: episodes = [], isLoading } = useQuery({
+    queryKey: ['episodesByCategory', formattedCategory],
+    queryFn: () => getEpisodesByArea(formattedCategory || ''),
+    enabled: !!formattedCategory
+  });
 
   return (
     <MainLayout>
       <h1 className="text-2xl font-bold mb-6">{categoryTitle}</h1>
 
-      {episodes.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, index) => (
+            <div key={index} className="bg-juricast-card animate-pulse rounded-lg h-64"></div>
+          ))}
+        </div>
+      ) : episodes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {episodes.map(episode => (
             <PodcastCard
@@ -30,9 +41,9 @@ const Category = () => {
               title={episode.titulo}
               area={episode.area}
               description={episode.descricao}
-              date={episode.data_publicacao}
-              comments={episode.comentarios}
-              likes={episode.curtidas}
+              date={episode.data_publicacao || ''}
+              comments={episode.comentarios || 0}
+              likes={episode.curtidas || 0}
               thumbnail={episode.imagem_miniatura}
             />
           ))}
