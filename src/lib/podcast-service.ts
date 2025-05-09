@@ -102,7 +102,11 @@ export function getRecentEpisodes(): Promise<PodcastEpisode[]> {
 export function saveEpisodeProgress(episodeId: number, progress: number, position: number = 0): void {
   try {
     const progressData = getProgressData();
-    progressData[episodeId] = { progress, lastPosition: position };
+    progressData[episodeId] = { 
+      episodeId, 
+      progress, 
+      lastPosition: position 
+    };
     localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progressData));
   } catch (error) {
     console.error("Error saving episode progress:", error);
@@ -143,7 +147,10 @@ export function toggleFavorite(episodeId: number): boolean {
     const favoritesData = getFavoritesData();
     const isFavorite = favoritesData[episodeId]?.isFavorite || false;
     
-    favoritesData[episodeId] = { isFavorite: !isFavorite };
+    favoritesData[episodeId] = { 
+      episodeId, 
+      isFavorite: !isFavorite 
+    };
     localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoritesData));
     
     return !isFavorite;
