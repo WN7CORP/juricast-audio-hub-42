@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -88,14 +89,22 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-juricast-background text-juricast-text;
+  }
+}
+
+@layer components {
+  .waveform {
+    @apply h-12 w-full flex items-end justify-between;
+  }
+  
+  .waveform-bar {
+    @apply w-1 bg-juricast-accent/50 rounded-full;
   }
 }
