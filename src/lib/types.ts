@@ -1,3 +1,4 @@
+
 export interface PodcastEpisode {
   id: number;
   titulo: string;
@@ -38,7 +39,7 @@ export interface SupabaseEpisode {
   area: string;
   descricao: string;
   url_audio: string;
-  imagem_miniatura: string;
+  imagem_miniatuta: string;  // Changed from imagem_miniatura to match database column name
   tag: string | string[];
   data_publicacao?: string;
   comentarios?: number;

@@ -62,7 +62,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
     if (!data) return null;
     
     // Usar cast para o tipo SupabaseEpisode para evitar erros de TypeScript
-    const episode = data as SupabaseEpisode;
+    const episode = data as unknown as SupabaseEpisode;
     
     return {
       ...episode,
@@ -71,7 +71,8 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
       favorito: getUserFavorite(episode.id)?.isFavorite || false,
       comentarios: episode.comentarios || 0,
       curtidas: episode.curtidas || 0,
-      data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR')
+      data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR'),
+      imagem_miniatura: episode.imagem_miniatuta // Map the field name correctly
     };
   } catch (error) {
     console.error(`Error in getEpisodeById for ${id}:`, error);
@@ -260,6 +261,7 @@ function formatEpisodes(episodes: any[]): PodcastEpisode[] {
     favorito: getUserFavorite(episode.id)?.isFavorite || false,
     comentarios: episode.comentarios || 0,
     curtidas: episode.curtidas || 0,
-    data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR')
+    data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR'),
+    imagem_miniatura: episode.imagem_miniatuta // Map from database field to our interface field
   }));
 }
