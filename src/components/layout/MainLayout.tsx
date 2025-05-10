@@ -14,14 +14,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex min-h-screen bg-juricast-background text-juricast-text">
+    <div className="flex min-h-screen bg-juricast-background text-juricast-text overflow-x-hidden">
       {!isMobile && <Sidebar />}
       
-      <main className="flex-1 flex flex-col pb-24 md:pb-0">
+      <main className="flex-1 flex flex-col pb-28 md:pb-0 w-full max-w-full">
         <TopNavigation />
         
         <motion.div 
-          className="flex-1 p-4 md:p-6"
+          className="flex-1 p-3 md:p-6 overflow-x-hidden"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}

@@ -31,3 +31,17 @@ export interface AreaCard {
   image?: string;
   slug: string;
 }
+
+// Adicionar interface para o tipo de retorno do Supabase
+export interface SupabaseEpisode {
+  id: number;
+  titulo: string;
+  area: string;
+  descricao: string;
+  url_audio: string;
+  imagem_miniatura: string;
+  tag: string | string[];
+  data_publicacao?: string;
+  comentarios?: number;
+  curtidas?: number;
+}

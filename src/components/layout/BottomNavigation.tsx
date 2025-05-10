@@ -18,7 +18,7 @@ const BottomNavigation = () => {
 
   return (
     <motion.div 
-      className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-sm"
+      className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-xs"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.3, delay: 0.3 }}
@@ -26,7 +26,8 @@ const BottomNavigation = () => {
       <div className="bg-juricast-card/80 backdrop-blur-lg border border-white/10 rounded-full px-4 py-3 shadow-xl">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
-            const isActive = path === item.href;
+            const isActive = path === item.href || 
+                           (item.href === "/?sort=categorias" && path.includes("/categoria"));
             const Icon = item.icon;
             
             return (
@@ -45,7 +46,7 @@ const BottomNavigation = () => {
                   whileHover={{ scale: 1.1, y: -4 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <Icon size={24} />
+                  <Icon size={20} />
                   {isActive && (
                     <motion.div 
                       className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full"

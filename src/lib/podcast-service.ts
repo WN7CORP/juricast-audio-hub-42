@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { PodcastEpisode, UserProgress, UserFavorite, AreaCard } from "./types";
+import { PodcastEpisode, UserProgress, UserFavorite, AreaCard, SupabaseEpisode } from "./types";
 
 // Local storage keys
 const PROGRESS_STORAGE_KEY = 'juricast_progress';
@@ -60,14 +61,17 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
 
     if (!data) return null;
     
+    // Usar cast para o tipo SupabaseEpisode para evitar erros de TypeScript
+    const episode = data as SupabaseEpisode;
+    
     return {
-      ...data,
-      tag: Array.isArray(data.tag) ? data.tag : [data.tag],
-      progresso: getUserProgress(data.id)?.progress || 0,
-      favorito: getUserFavorite(data.id)?.isFavorite || false,
-      comentarios: data.comentarios || 0,
-      curtidas: data.curtidas || 0,
-      data_publicacao: data.data_publicacao || new Date().toLocaleDateString('pt-BR')
+      ...episode,
+      tag: Array.isArray(episode.tag) ? episode.tag : [episode.tag],
+      progresso: getUserProgress(episode.id)?.progress || 0,
+      favorito: getUserFavorite(episode.id)?.isFavorite || false,
+      comentarios: episode.comentarios || 0,
+      curtidas: episode.curtidas || 0,
+      data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR')
     };
   } catch (error) {
     console.error(`Error in getEpisodeById for ${id}:`, error);
