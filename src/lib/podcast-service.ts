@@ -61,7 +61,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
 
     if (!data) return null;
     
-    // Usar cast para o tipo SupabaseEpisode para evitar erros de TypeScript
+    // Use a proper cast to handle the type mismatch
     const episode = data as unknown as SupabaseEpisode;
     
     return {
@@ -72,7 +72,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
       comentarios: episode.comentarios || 0,
       curtidas: episode.curtidas || 0,
       data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR'),
-      imagem_miniatura: episode.imagem_miniatuta // Map the field name correctly
+      imagem_miniatura: episode.imagem_miniatuta // Map from database field to interface field
     };
   } catch (error) {
     console.error(`Error in getEpisodeById for ${id}:`, error);

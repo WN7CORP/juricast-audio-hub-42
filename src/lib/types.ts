@@ -32,14 +32,14 @@ export interface AreaCard {
   slug: string;
 }
 
-// Adicionar interface para o tipo de retorno do Supabase
+// Interface for the type of return from Supabase
 export interface SupabaseEpisode {
   id: number;
   titulo: string;
   area: string;
   descricao: string;
   url_audio: string;
-  imagem_miniatuta: string;  // Changed from imagem_miniatura to match database column name
+  imagem_miniatuta: string;  // Database column name
   tag: string | string[];
   data_publicacao?: string;
   comentarios?: number;

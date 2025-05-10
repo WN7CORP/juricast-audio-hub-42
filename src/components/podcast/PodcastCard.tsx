@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Play } from 'lucide-react';
+import { Heart, Play, File, Gavel, Scale, Book } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface PodcastCardProps {
@@ -24,6 +24,16 @@ const PodcastCard: React.FC<PodcastCardProps> = ({
   likes = 0,
   thumbnail
 }) => {
+  // Helper function to return appropriate area icon
+  const getAreaIcon = () => {
+    const areaLower = area.toLowerCase();
+    
+    if (areaLower.includes('civil')) return <Book size={14} />;
+    if (areaLower.includes('penal') || areaLower.includes('criminal')) return <Gavel size={14} />;
+    if (areaLower.includes('constituc')) return <Scale size={14} />;
+    return <File size={14} />;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -45,7 +55,10 @@ const PodcastCard: React.FC<PodcastCardProps> = ({
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <div className="absolute bottom-4 left-4 right-4">
                 <h3 className="text-lg font-semibold mb-1 truncate">{title}</h3>
-                <p className="text-juricast-accent text-sm">{area}</p>
+                <div className="flex items-center text-juricast-accent text-sm gap-1">
+                  {getAreaIcon()}
+                  <span>{area}</span>
+                </div>
               </div>
             </div>
             
@@ -69,7 +82,10 @@ const PodcastCard: React.FC<PodcastCardProps> = ({
           
           <div className="p-4">
             <h3 className="text-lg font-semibold mb-1 line-clamp-1 group-hover:text-juricast-accent transition-colors">{title}</h3>
-            <p className="text-juricast-accent text-sm mb-2">{area}</p>
+            <div className="flex items-center text-juricast-accent text-sm mb-2 gap-1">
+              {getAreaIcon()}
+              <span>{area}</span>
+            </div>
             <p className="text-juricast-muted text-sm line-clamp-2 mb-3">{description}</p>
             
             <div className="flex justify-between items-center">
