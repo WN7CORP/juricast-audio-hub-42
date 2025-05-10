@@ -10,7 +10,7 @@ const FAVORITES_STORAGE_KEY = 'juricast_favorites';
 export async function getAllEpisodes(): Promise<PodcastEpisode[]> {
   try {
     const { data, error } = await supabase
-      .from('juricast')
+      .from('podcast_tabela')
       .select('*');
     
     if (error) {
@@ -29,7 +29,7 @@ export async function getAllEpisodes(): Promise<PodcastEpisode[]> {
 export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]> {
   try {
     const { data, error } = await supabase
-      .from('juricast')
+      .from('podcast_tabela')
       .select('*')
       .eq('area', area);
     
@@ -49,7 +49,7 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
 export async function getEpisodeById(id: number): Promise<PodcastEpisode | null> {
   try {
     const { data, error } = await supabase
-      .from('juricast')
+      .from('podcast_tabela')
       .select('*')
       .eq('id', id)
       .single();
@@ -83,7 +83,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
 export async function getAllAreas(): Promise<AreaCard[]> {
   try {
     const { data, error } = await supabase
-      .from('juricast')
+      .from('podcast_tabela')
       .select('area');
     
     if (error) {

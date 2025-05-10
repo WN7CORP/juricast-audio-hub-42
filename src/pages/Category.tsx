@@ -68,7 +68,7 @@ const Category = () => {
             ))}
           </motion.div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-64 bg-juricast-card rounded-lg p-4 md:p-6">
+          <div className="flex flex-col items-center justify-center h-64 bg-juricast-card rounded-lg p-4 md:p-6 mb-20">
             <h2 className="text-xl font-semibold mb-2 text-center">Nenhum episódio encontrado</h2>
             <p className="text-juricast-muted text-center mb-4">
               Não encontramos episódios na categoria {categoryTitle}.

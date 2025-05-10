@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 const fetchCategories = async () => {
   try {
     const { data, error } = await supabase
-      .from('juricast')
+      .from('podcast_tabela')
       .select('area')
       .order('area', { ascending: true });
 
