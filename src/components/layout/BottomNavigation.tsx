@@ -18,43 +18,51 @@ const BottomNavigation = () => {
 
   return (
     <motion.div 
-      className="bottom-nav"
+      className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-sm"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.3, delay: 0.3 }}
     >
-      <div className="flex justify-around items-center">
-        {navItems.map((item) => {
-          const isActive = path === item.href;
-          const Icon = item.icon;
-          
-          return (
-            <Link
-              key={item.label}
-              to={item.href}
-              className="flex flex-col items-center"
-            >
-              <motion.div
-                className={cn(
-                  "p-2 rounded-full transition-all",
-                  isActive 
-                    ? "text-juricast-accent" 
-                    : "text-juricast-muted"
-                )}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+      <div className="bg-juricast-card/80 backdrop-blur-lg border border-white/10 rounded-full px-4 py-3 shadow-xl">
+        <div className="flex justify-around items-center">
+          {navItems.map((item) => {
+            const isActive = path === item.href;
+            const Icon = item.icon;
+            
+            return (
+              <Link
+                key={item.label}
+                to={item.href}
+                className="flex flex-col items-center relative"
               >
-                <Icon size={24} />
-              </motion.div>
-              <span className={cn(
-                "text-xs",
-                isActive ? "text-juricast-text" : "text-juricast-muted"
-              )}>
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
+                <motion.div
+                  className={cn(
+                    "p-2 rounded-full transition-all",
+                    isActive 
+                      ? "bg-juricast-accent text-juricast-text" 
+                      : "text-juricast-muted hover:text-juricast-text"
+                  )}
+                  whileHover={{ scale: 1.1, y: -4 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Icon size={24} />
+                  {isActive && (
+                    <motion.div 
+                      className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full"
+                      layoutId="navIndicator"
+                    />
+                  )}
+                </motion.div>
+                <span className={cn(
+                  "text-xs mt-1",
+                  isActive ? "text-juricast-text" : "text-juricast-muted"
+                )}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </motion.div>
   );

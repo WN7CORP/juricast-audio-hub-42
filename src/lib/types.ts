@@ -24,3 +24,10 @@ export interface UserFavorite {
   episodeId: number;
   isFavorite: boolean;
 }
+
+export interface AreaCard {
+  name: string;
+  episodeCount: number;
+  image?: string;
+  slug: string;
+}

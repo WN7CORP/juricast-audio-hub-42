@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { PodcastEpisode, UserProgress, UserFavorite } from "./types";
+import { PodcastEpisode, UserProgress, UserFavorite, AreaCard } from "./types";
 
 // Local storage keys
 const PROGRESS_STORAGE_KEY = 'juricast_progress';
@@ -74,6 +73,49 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
     console.error(`Error in getEpisodeById for ${id}:`, error);
     return null;
   }
+}
+
+// Get all unique areas with episode counts
+export async function getAllAreas(): Promise<AreaCard[]> {
+  try {
+    const { data, error } = await supabase
+      .from('juricast')
+      .select('area');
+    
+    if (error) {
+      console.error("Error fetching areas:", error);
+      throw error;
+    }
+
+    const areasMap = new Map<string, number>();
+    
+    // Count episodes per area
+    data?.forEach(episode => {
+      if (episode.area) {
+        const count = areasMap.get(episode.area) || 0;
+        areasMap.set(episode.area, count + 1);
+      }
+    });
+    
+    // Convert to array of area cards
+    const areas: AreaCard[] = Array.from(areasMap.entries()).map(([name, count]) => ({
+      name,
+      episodeCount: count,
+      slug: name.toLowerCase().replace(/\s+/g, '-'),
+      image: getAreaImage(name)
+    }));
+    
+    return areas.sort((a, b) => a.name.localeCompare(b.name));
+  } catch (error) {
+    console.error("Error in getAllAreas:", error);
+    return [];
+  }
+}
+
+// Helper function to get representative image for an area
+function getAreaImage(areaName: string): string {
+  // Try to find an episode with this area to use its image
+  return '/placeholder.svg'; // Fallback to placeholder
 }
 
 // Get featured episodes (most liked)
@@ -205,6 +247,7 @@ function getFavoritesData(): Record<number, UserFavorite> {
   }
 }
 
+// Format episodes with additional client-side data
 function formatEpisodes(episodes: any[]): PodcastEpisode[] {
   return episodes.map(episode => ({
     ...episode,

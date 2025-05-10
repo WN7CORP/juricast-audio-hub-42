@@ -1,13 +1,26 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, List, BarChart2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { getAllAreas } from '@/lib/podcast-service';
+import { AreaCard } from '@/lib/types';
 
 const TopNavigation = () => {
+  const [areas, setAreas] = useState<AreaCard[]>([]);
+  
+  useEffect(() => {
+    const fetchAreas = async () => {
+      const areaData = await getAllAreas();
+      setAreas(areaData);
+    };
+    
+    fetchAreas();
+  }, []);
+
   return (
-    <div className="top-nav">
+    <div className="sticky top-0 z-40 bg-gradient-to-b from-juricast-background to-juricast-background/80 backdrop-blur-sm py-2">
       <div className="flex flex-col">
         <div className="flex justify-between items-center px-4 py-2">
           <Link to="/">
@@ -35,24 +48,25 @@ const TopNavigation = () => {
           </div>
         </div>
         
-        <CategoryNav />
+        <CategoryNav areas={areas} />
       </div>
     </div>
   );
 };
 
-const CategoryNav = () => {
+const CategoryNav = ({ areas }: { areas: AreaCard[] }) => {
   const location = useLocation();
   const path = location.pathname;
   
+  // Default categories plus dynamic areas
   const categories = [
     { name: "Todos", href: "/" },
     { name: "Em Progresso", href: "/em-progresso" },
     { name: "Favoritos", href: "/favoritos" },
-    { name: "Penal", href: "/categoria/penal" },
-    { name: "Civil", href: "/categoria/civil" },
-    { name: "Trabalhista", href: "/categoria/trabalhista" },
-    { name: "Constitucional", href: "/categoria/constitucional" }
+    ...areas.map(area => ({
+      name: area.name,
+      href: `/categoria/${area.slug}`
+    }))
   ];
   
   return (
