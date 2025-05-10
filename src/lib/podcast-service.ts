@@ -28,16 +28,26 @@ export async function getAllEpisodes(): Promise<PodcastEpisode[]> {
 // Get episodes by area (category)
 export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]> {
   try {
+    // Format the area string to match how it might be stored in the database
+    // First letter capitalized, spaces restored from dashes
+    const formattedArea = area
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+    
+    console.log("Searching for area:", formattedArea);
+    
     const { data, error } = await supabase
       .from('podcast_tabela')
       .select('*')
-      .eq('area', area);
+      .ilike('area', `%${formattedArea}%`);
     
     if (error) {
       console.error(`Error fetching episodes for area ${area}:`, error);
       throw error;
     }
 
+    console.log(`Found ${data?.length || 0} episodes for area ${formattedArea}`);
     return formatEpisodes(data || []);
   } catch (error) {
     console.error(`Error in getEpisodesByArea for ${area}:`, error);
@@ -256,7 +266,7 @@ function getFavoritesData(): Record<number, UserFavorite> {
 function formatEpisodes(episodes: any[]): PodcastEpisode[] {
   return episodes.map(episode => ({
     ...episode,
-    tag: Array.isArray(episode.tag) ? episode.tag : [episode.tag],
+    tag: Array.isArray(episode.tag) ? episode.tag : episode.tag ? [episode.tag] : [],
     progresso: getUserProgress(episode.id)?.progress || 0,
     favorito: getUserFavorite(episode.id)?.isFavorite || false,
     comentarios: episode.comentarios || 0,

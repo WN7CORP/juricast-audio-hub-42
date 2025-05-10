@@ -9,18 +9,19 @@ import { motion } from 'framer-motion';
 
 const Category = () => {
   const { category } = useParams<{category: string}>();
-  const formattedCategory = category?.replace(/-/g, ' ');
   
   // Convert category slug to proper title case
-  const categoryTitle = formattedCategory
-    ?.split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  const categoryTitle = category
+    ? category
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ')
+    : '';
   
   const { data: episodes = [], isLoading } = useQuery({
-    queryKey: ['episodesByCategory', formattedCategory],
-    queryFn: () => getEpisodesByArea(formattedCategory || ''),
-    enabled: !!formattedCategory
+    queryKey: ['episodesByCategory', category],
+    queryFn: () => getEpisodesByArea(category || ''),
+    enabled: !!category
   });
 
   const containerVariants = {
