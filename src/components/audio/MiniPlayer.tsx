@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Pause, X, SkipForward, SkipBack } from 'lucide-react';
+import { Play, Pause, X, Skip10s, SkipBack10s } from 'lucide-react';
 import { useAudioPlayer } from '@/context/AudioPlayerContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -68,7 +68,7 @@ const MiniPlayer: React.FC = () => {
                   "p-1 rounded-full hover:bg-juricast-card/50"
                 )}
               >
-                <SkipBack size={20} />
+                <SkipBack10s size={20} />
               </button>
               
               <motion.button
@@ -92,7 +92,7 @@ const MiniPlayer: React.FC = () => {
                   "p-1 rounded-full hover:bg-juricast-card/50"
                 )}
               >
-                <SkipForward size={20} />
+                <Skip10s size={20} />
               </button>
               
               <button 
