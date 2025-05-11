@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
 import Index from "./pages/Index";
 import PodcastDetails from "./pages/PodcastDetails";
 import Favorites from "./pages/Favorites";
@@ -43,9 +44,11 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <AudioPlayerProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AudioPlayerProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
