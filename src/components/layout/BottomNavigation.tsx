@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Heart, Clock, List } from 'lucide-react';
+import { Home, Clock, List, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -12,29 +12,30 @@ const BottomNavigation = () => {
   const navItems = [
     { icon: Home, label: "Home", href: "/" },
     { icon: Clock, label: "Progresso", href: "/em-progresso" },
-    { icon: Heart, label: "Favoritos", href: "/favoritos" },
+    { icon: Check, label: "Concluídos", href: "/concluidos" },
     { icon: List, label: "Categorias", href: "/?sort=categorias" }
   ];
 
   return (
     <motion.div 
-      className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 pb-safe"
+      className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 pb-safe"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.3, delay: 0.3 }}
     >
-      <div className="mx-auto max-w-md bg-juricast-card/80 backdrop-blur-lg border border-white/10 rounded-full px-4 py-3 shadow-xl">
+      <div className="mx-auto max-w-md bg-juricast-card/80 backdrop-blur-lg border border-white/10 rounded-full px-6 py-3 shadow-xl">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
             const isActive = path === item.href || 
-                           (item.href === "/?sort=categorias" && path.includes("/categoria"));
+                           (item.href === "/?sort=categorias" && path.includes("/categoria")) ||
+                           (item.href === "/concluidos" && path.includes("/concluidos"));
             const Icon = item.icon;
             
             return (
               <Link
                 key={item.label}
                 to={item.href}
-                className="flex flex-col items-center relative px-3"
+                className="flex flex-col items-center relative px-4"
               >
                 <motion.div
                   className={cn(

@@ -15,7 +15,8 @@ const MiniPlayer: React.FC = () => {
     skipForward, 
     skipBackward,
     showMiniPlayer,
-    setShowMiniPlayer
+    setShowMiniPlayer,
+    progress
   } = useAudioPlayer();
 
   if (!currentEpisode || !showMiniPlayer) return null;
@@ -29,11 +30,13 @@ const MiniPlayer: React.FC = () => {
     setShowMiniPlayer(false);
   };
 
+  const isCompleted = progress >= 0.95; // Consider completed if 95% listened
+
   return (
     <AnimatePresence>
       {showMiniPlayer && (
         <motion.div 
-          className="mini-player py-2 px-3 mb-20"
+          className="mini-player py-3 px-4 mb-24"
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
@@ -43,13 +46,18 @@ const MiniPlayer: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center flex-1 min-w-0">
               <div 
-                className="w-10 h-10 rounded overflow-hidden flex-shrink-0 mr-3"
+                className="relative w-10 h-10 rounded-md overflow-hidden flex-shrink-0 mr-3"
               >
                 <img 
                   src={currentEpisode.imagem_miniatura} 
                   alt={currentEpisode.titulo}
                   className="w-full h-full object-cover"
                 />
+                {isCompleted && (
+                  <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                    <Check size={10} className="text-white" />
+                  </div>
+                )}
               </div>
               
               <div className="truncate flex-1 min-w-0">
@@ -102,6 +110,14 @@ const MiniPlayer: React.FC = () => {
                 <X size={18} />
               </button>
             </div>
+          </div>
+          
+          {/* Progress bar */}
+          <div className="w-full h-1 bg-juricast-background/30 rounded-full mt-2 overflow-hidden">
+            <motion.div 
+              className="h-full bg-juricast-accent"
+              style={{ width: `${Math.min(progress * 100, 100)}%` }}
+            />
           </div>
         </motion.div>
       )}

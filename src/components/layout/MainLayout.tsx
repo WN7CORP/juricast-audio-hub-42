@@ -18,7 +18,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     <div className="flex min-h-screen bg-juricast-background text-juricast-text overflow-hidden">
       {!isMobile && <Sidebar />}
       
-      <main className="flex-1 flex flex-col pb-28 md:pb-0 w-full max-w-full">
+      <main className="flex-1 flex flex-col pb-32 md:pb-8 w-full max-w-full">
         <TopNavigation />
         
         <motion.div 
