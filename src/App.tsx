@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +9,7 @@ import Index from "./pages/Index";
 import PodcastDetails from "./pages/PodcastDetails";
 import Favorites from "./pages/Favorites";
 import InProgress from "./pages/InProgress";
+import Concluidos from "./pages/Concluidos";
 import Category from "./pages/Category";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +32,7 @@ const AppRoutes = () => {
         <Route path="/podcast/:id" element={<PodcastDetails />} />
         <Route path="/favoritos" element={<Favorites />} />
         <Route path="/em-progresso" element={<InProgress />} />
+        <Route path="/concluidos" element={<Concluidos />} />
         <Route path="/categoria/:category" element={<Category />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

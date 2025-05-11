@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Clock, List, Check } from 'lucide-react';
+import { Home, Clock, Heart, Bookmark, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -13,21 +13,22 @@ const BottomNavigation = () => {
     { icon: Home, label: "Home", href: "/" },
     { icon: Clock, label: "Progresso", href: "/em-progresso" },
     { icon: Check, label: "Concluídos", href: "/concluidos" },
-    { icon: List, label: "Categorias", href: "/?sort=categorias" }
+    { icon: Heart, label: "Favoritos", href: "/favoritos" }
   ];
 
   return (
     <motion.div 
-      className="fixed bottom-0 left-0 right-0 z-40 pb-safe"
+      className="fixed bottom-0 left-0 right-0 z-40 pb-safe flex justify-center"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.3, delay: 0.3 }}
     >
-      <div className="mx-auto max-w-md bg-juricast-card/80 backdrop-blur-lg border border-white/10 rounded-t-xl px-6 py-3 shadow-xl">
+      <div className="w-full max-w-md mx-auto bg-juricast-card/80 backdrop-blur-lg border border-white/10 rounded-t-xl px-6 py-3 shadow-xl">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
             const isActive = path === item.href || 
-                           (item.href === "/?sort=categorias" && path.includes("/categoria")) ||
+                           (item.href === "/em-progresso" && path.includes("/em-progresso")) ||
+                           (item.href === "/favoritos" && path.includes("/favoritos")) ||
                            (item.href === "/concluidos" && path.includes("/concluidos"));
             const Icon = item.icon;
             

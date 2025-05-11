@@ -1,39 +1,31 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
-import { getInProgressEpisodes } from '@/lib/podcast-service';
-import { Link } from 'react-router-dom';
-import { Play, Heart } from 'lucide-react';
+import { getAllEpisodes } from '@/lib/podcast-service';
 import { motion } from 'framer-motion';
 import { useAudioPlayer } from '@/context/AudioPlayerContext';
-import { toggleFavorite } from '@/lib/podcast-service';
-import { toast } from '@/hooks/use-toast';
 import PlaylistItem from '@/components/podcast/PlaylistItem';
+import { Link } from 'react-router-dom';
 
-const InProgress = () => {
-  const { data: inProgressEpisodes = [], isLoading } = useQuery({
-    queryKey: ['inProgressEpisodes'],
-    queryFn: getInProgressEpisodes
+const Concluidos = () => {
+  const { data: allEpisodes = [], isLoading } = useQuery({
+    queryKey: ['allEpisodes'],
+    queryFn: getAllEpisodes
   });
   
   const { playEpisode, currentEpisode } = useAudioPlayer();
-  const queryClient = useQueryClient();
+  
+  // Filter for completed episodes (progress >= 95%)
+  const completedEpisodes = allEpisodes.filter(episode => 
+    episode.progresso && episode.progresso >= 95
+  );
   
   const handlePlay = (episodeId: number) => {
-    const episode = inProgressEpisodes.find(ep => ep.id === episodeId);
+    const episode = completedEpisodes.find(ep => ep.id === episodeId);
     if (episode) {
       playEpisode(episode, true);
     }
-  };
-  
-  const handleToggleFavorite = (episodeId: number) => {
-    const newFavoriteState = toggleFavorite(episodeId);
-    toast({
-      title: newFavoriteState ? "Adicionado aos favoritos" : "Removido dos favoritos",
-      duration: 2000,
-    });
-    queryClient.invalidateQueries({ queryKey: ['inProgressEpisodes'] });
   };
 
   return (
@@ -43,7 +35,7 @@ const InProgress = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-2xl font-bold mb-6">Em Progresso</h1>
+        <h1 className="text-2xl font-bold mb-6">Episódios Concluídos</h1>
 
         {isLoading ? (
           <div className="grid grid-cols-1 gap-4">
@@ -51,9 +43,9 @@ const InProgress = () => {
               <div key={index} className="bg-juricast-card animate-pulse rounded-lg h-24"></div>
             ))}
           </div>
-        ) : inProgressEpisodes.length > 0 ? (
+        ) : completedEpisodes.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
-            {inProgressEpisodes.map((episode, index) => (
+            {completedEpisodes.map((episode, index) => (
               <PlaylistItem
                 key={episode.id}
                 episode={episode}
@@ -65,9 +57,9 @@ const InProgress = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-64 bg-juricast-card rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-2">Nada em progresso</h2>
+            <h2 className="text-xl font-semibold mb-2">Nenhum episódio concluído</h2>
             <p className="text-juricast-muted text-center mb-4">
-              Você ainda não começou a ouvir nenhum episódio.
+              Você ainda não completou nenhum episódio.
             </p>
             <Link 
               to="/"
@@ -82,4 +74,4 @@ const InProgress = () => {
   );
 };
 
-export default InProgress;
+export default Concluidos;
