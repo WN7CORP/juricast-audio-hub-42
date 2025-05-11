@@ -12,8 +12,8 @@ interface AudioPlayerContextProps {
   playbackSpeed: number;
   showMiniPlayer: boolean;
   sleepTimerRemaining: number | null;
-  progress: number; // Add progress property
-  playEpisode: (episode: PodcastEpisode) => void;
+  progress: number;
+  playEpisode: (episode: PodcastEpisode, autoPlay?: boolean) => void;
   togglePlayPause: () => void;
   setVolume: (volume: number) => void;
   toggleMute: () => void;
@@ -63,11 +63,40 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showMiniPlayer, setShowMiniPlayer] = useState(false);
   const [sleepTimerRemaining, setSleepTimerRemaining] = useState<number | null>(null);
+  const [currentPath, setCurrentPath] = useState<string>('');
   const audioRef = useRef<HTMLAudioElement>(null);
   const [timerIntervalId, setTimerIntervalId] = useState<NodeJS.Timeout | null>(null);
 
   // Add progress calculation
   const progress = duration > 0 ? currentTime / duration : 0;
+
+  // Monitor URL changes to control when mini player should show
+  useEffect(() => {
+    // Store the initial path when an episode is loaded
+    if (currentEpisode) {
+      const episodePath = `/podcast/${currentEpisode.id}`;
+      setCurrentPath(episodePath);
+      
+      // Check if we're on the episode page or not
+      const shouldShowMiniPlayer = window.location.pathname !== episodePath;
+      setShowMiniPlayer(shouldShowMiniPlayer);
+      
+      // Listen for path changes
+      const handleRouteChange = () => {
+        const newPath = window.location.pathname;
+        const isEpisodePage = newPath === episodePath;
+        
+        // Only show mini player when navigating away from the episode page
+        setShowMiniPlayer(!isEpisodePage);
+      };
+      
+      window.addEventListener('popstate', handleRouteChange);
+      
+      return () => {
+        window.removeEventListener('popstate', handleRouteChange);
+      };
+    }
+  }, [currentEpisode]);
 
   useEffect(() => {
     if (sleepTimerRemaining !== null && sleepTimerRemaining > 0) {
@@ -95,16 +124,27 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [sleepTimerRemaining]);
 
-  const playEpisode = (episode: PodcastEpisode) => {
+  const playEpisode = (episode: PodcastEpisode, autoPlay: boolean = false) => {
     setCurrentEpisode(episode);
-    setIsPlaying(true);
-    setShowMiniPlayer(true);
+    setIsPlaying(autoPlay);
+    
+    // Update the current path for this episode
+    const episodePath = `/podcast/${episode.id}`;
+    setCurrentPath(episodePath);
+    
+    // Only show mini player if we're not on the episode page
+    const currentPath = window.location.pathname;
+    setShowMiniPlayer(currentPath !== episodePath);
+    
     if (audioRef.current) {
       audioRef.current.src = episode.arquivo;
       audioRef.current.load();
-      audioRef.current.play().catch(error => {
-        console.error("Playback failed:", error);
-      });
+      
+      if (autoPlay) {
+        audioRef.current.play().catch(error => {
+          console.error("Playback failed:", error);
+        });
+      }
     }
   };
 
@@ -186,7 +226,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     playbackSpeed,
     showMiniPlayer,
     sleepTimerRemaining,
-    progress, // Add progress to context value
+    progress,
     playEpisode,
     togglePlayPause,
     setVolume,

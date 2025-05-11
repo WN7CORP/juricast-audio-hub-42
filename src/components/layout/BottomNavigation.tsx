@@ -18,12 +18,12 @@ const BottomNavigation = () => {
 
   return (
     <motion.div 
-      className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40 pb-safe"
+      className="fixed bottom-0 left-0 right-0 z-40 pb-safe"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.3, delay: 0.3 }}
     >
-      <div className="mx-auto max-w-md bg-juricast-card/80 backdrop-blur-lg border border-white/10 rounded-full px-6 py-3 shadow-xl">
+      <div className="mx-auto max-w-md bg-juricast-card/80 backdrop-blur-lg border border-white/10 rounded-t-xl px-6 py-3 shadow-xl">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
             const isActive = path === item.href || 
