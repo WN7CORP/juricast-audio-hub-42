@@ -1,19 +1,18 @@
-import React, { createContext, useState, useRef, useEffect, useContext } from 'react';
+
+import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import { toast } from '@/hooks/use-toast';
 import { PodcastEpisode } from '@/lib/types';
 
-interface AudioPlayerContextProps {
+interface AudioPlayerContextType {
   currentEpisode: PodcastEpisode | null;
   isPlaying: boolean;
   duration: number;
   currentTime: number;
+  playbackSpeed: number;
   volume: number;
   isMuted: boolean;
   audioRef: React.RefObject<HTMLAudioElement>;
-  playbackSpeed: number;
-  showMiniPlayer: boolean;
-  sleepTimerRemaining: number | null;
-  progress: number;
-  playEpisode: (episode: PodcastEpisode, autoPlay?: boolean) => void;
+  playEpisode: (episode: PodcastEpisode) => void;
   togglePlayPause: () => void;
   setVolume: (volume: number) => void;
   toggleMute: () => void;
@@ -21,144 +20,111 @@ interface AudioPlayerContextProps {
   skipForward: (seconds?: number) => void;
   skipBackward: (seconds?: number) => void;
   setPlaybackSpeed: (speed: number) => void;
-  setShowMiniPlayer: (show: boolean) => void;
   setSleepTimer: (minutes: number | null) => void;
+  sleepTimerRemaining: number | null;
+  showMiniPlayer: boolean;
+  setShowMiniPlayer: (show: boolean) => void;
 }
 
-const defaultContextValue: AudioPlayerContextProps = {
-  currentEpisode: null,
-  isPlaying: false,
-  duration: 0,
-  currentTime: 0,
-  volume: 0.5,
-  isMuted: false,
-  audioRef: { current: null },
-  playbackSpeed: 1,
-  showMiniPlayer: false,
-  sleepTimerRemaining: null,
-  progress: 0,
-  playEpisode: () => {},
-  togglePlayPause: () => {},
-  setVolume: () => {},
-  toggleMute: () => {},
-  seek: () => {},
-  skipForward: () => {},
-  skipBackward: () => {},
-  setPlaybackSpeed: () => {},
-  setShowMiniPlayer: () => {},
-  setSleepTimer: () => {},
-};
-
-const AudioPlayerContext = createContext<AudioPlayerContextProps>(defaultContextValue);
-
-export const useAudioPlayer = () => useContext(AudioPlayerContext);
+const AudioPlayerContext = createContext<AudioPlayerContextType | undefined>(undefined);
 
 export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentEpisode, setCurrentEpisode] = useState<PodcastEpisode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [volume, setVolumeState] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
   const [showMiniPlayer, setShowMiniPlayer] = useState(false);
   const [sleepTimerRemaining, setSleepTimerRemaining] = useState<number | null>(null);
-  const [currentPath, setCurrentPath] = useState<string>('');
+  
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [timerIntervalId, setTimerIntervalId] = useState<NodeJS.Timeout | null>(null);
-
-  // Add progress calculation
-  const progress = duration > 0 ? currentTime / duration : 0;
-
-  // Monitor URL changes to control when mini player should show
-  useEffect(() => {
-    // Store the initial path when an episode is loaded
-    if (currentEpisode) {
-      const episodePath = `/podcast/${currentEpisode.id}`;
-      setCurrentPath(episodePath);
-      
-      // Check if we're on the episode page or not
-      const shouldShowMiniPlayer = window.location.pathname !== episodePath;
-      setShowMiniPlayer(shouldShowMiniPlayer);
-      
-      // Listen for path changes
-      const handleRouteChange = () => {
-        const newPath = window.location.pathname;
-        const isEpisodePage = newPath === episodePath;
-        
-        // Only show mini player when navigating away from the episode page
-        setShowMiniPlayer(!isEpisodePage);
-      };
-      
-      window.addEventListener('popstate', handleRouteChange);
-      
-      return () => {
-        window.removeEventListener('popstate', handleRouteChange);
-      };
-    }
-  }, [currentEpisode]);
+  const sleepTimerRef = useRef<number | null>(null);
+  const progressTrackingInterval = useRef<number | null>(null);
 
   useEffect(() => {
-    if (sleepTimerRemaining !== null && sleepTimerRemaining > 0) {
-      const id = setInterval(() => {
-        setSleepTimerRemaining(prev => {
-          if (prev === null) {
-            clearInterval(timerIntervalId!);
-            return null;
-          }
-          const newValue = prev - 1;
-          if (newValue <= 0) {
-            setIsPlaying(false);
-            clearInterval(id);
-            return null;
-          }
-          return newValue;
-        });
-      }, 1000);
-      setTimerIntervalId(id);
+    // Clean up on unmount
+    return () => {
+      if (sleepTimerRef.current) {
+        window.clearTimeout(sleepTimerRef.current);
+      }
+      if (progressTrackingInterval.current) {
+        window.clearInterval(progressTrackingInterval.current);
+      }
+    };
+  }, []);
 
-      return () => clearInterval(id);
-    } else if (timerIntervalId) {
-      clearInterval(timerIntervalId);
-      setTimerIntervalId(null);
-    }
-  }, [sleepTimerRemaining]);
-
-  const playEpisode = (episode: PodcastEpisode, autoPlay: boolean = false) => {
-    setCurrentEpisode(episode);
-    setIsPlaying(autoPlay);
-    
-    // Update the current path for this episode
-    const episodePath = `/podcast/${episode.id}`;
-    setCurrentPath(episodePath);
-    
-    // Only show mini player if we're not on the episode page
-    const currentPath = window.location.pathname;
-    setShowMiniPlayer(currentPath !== episodePath);
-    
+  useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.src = episode.arquivo;
-      audioRef.current.load();
-      
-      if (autoPlay) {
+      audioRef.current.playbackRate = playbackSpeed;
+    }
+  }, [playbackSpeed]);
+
+  const playEpisode = (episode: PodcastEpisode) => {
+    setCurrentEpisode(episode);
+    setIsPlaying(true);
+    setShowMiniPlayer(true);
+
+    // Reset sleep timer if there was one
+    if (sleepTimerRef.current) {
+      window.clearTimeout(sleepTimerRef.current);
+      setSleepTimerRemaining(null);
+    }
+
+    // Start with a small delay to allow audio to load
+    setTimeout(() => {
+      if (audioRef.current) {
         audioRef.current.play().catch(error => {
-          console.error("Playback failed:", error);
+          console.error("Error playing audio:", error);
+          setIsPlaying(false);
+          toast({
+            title: "Erro na reprodução",
+            description: "Não foi possível reproduzir o áudio. Tente novamente.",
+            variant: "destructive"
+          });
         });
       }
-    }
+    }, 100);
   };
 
   const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
+    if (!currentEpisode) return;
+
+    if (isPlaying) {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current?.play().catch(error => {
+        console.error("Error playing audio:", error);
+        toast({
+          title: "Erro na reprodução",
+          description: "Não foi possível reproduzir o áudio. Tente novamente.",
+          variant: "destructive"
+        });
+      });
+      setIsPlaying(true);
+    }
+  };
+
+  const setVolume = (newVolume: number) => {
+    setVolumeState(newVolume);
+    
     if (audioRef.current) {
-      isPlaying ? audioRef.current.pause() : audioRef.current.play();
+      audioRef.current.volume = newVolume;
+      setIsMuted(newVolume === 0);
     }
   };
 
   const toggleMute = () => {
-    setIsMuted(!isMuted);
     if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
+      if (isMuted) {
+        audioRef.current.volume = volume;
+        setIsMuted(false);
+      } else {
+        audioRef.current.volume = 0;
+        setIsMuted(true);
+      }
     }
   };
 
@@ -169,39 +135,64 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  const skipForward = (seconds: number = 15) => {
+  const skipForward = (seconds: number = 10) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = Math.min(audioRef.current.currentTime + seconds, duration);
-      setCurrentTime(audioRef.current.currentTime);
+      const newTime = Math.min(audioRef.current.duration, audioRef.current.currentTime + seconds);
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
     }
   };
 
-  const skipBackward = (seconds: number = 15) => {
+  const skipBackward = (seconds: number = 10) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = Math.max(audioRef.current.currentTime - seconds, 0);
-      setCurrentTime(audioRef.current.currentTime);
+      const newTime = Math.max(0, audioRef.current.currentTime - seconds);
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
     }
   };
 
   const setSleepTimer = (minutes: number | null) => {
-    if (minutes === null) {
-      setSleepTimerRemaining(null);
+    // Clear any existing timer
+    if (sleepTimerRef.current) {
+      window.clearTimeout(sleepTimerRef.current);
+      sleepTimerRef.current = null;
+    }
+
+    // Set new timer if minutes is provided
+    if (minutes) {
+      const milliseconds = minutes * 60 * 1000;
+      setSleepTimerRemaining(milliseconds / 1000);
+      
+      // Create a countdown effect
+      const countdownInterval = window.setInterval(() => {
+        setSleepTimerRemaining(prev => {
+          if (prev && prev > 1) {
+            return prev - 1;
+          } else {
+            clearInterval(countdownInterval);
+            return null;
+          }
+        });
+      }, 1000);
+      
+      // Set the actual sleep timer
+      sleepTimerRef.current = window.setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        }
+        toast({
+          title: "Timer de sono",
+          description: "Reprodução pausada pelo timer de sono."
+        });
+        setSleepTimerRemaining(null);
+        sleepTimerRef.current = null;
+      }, milliseconds);
     } else {
-      setSleepTimerRemaining(minutes * 60);
+      // If no minutes provided, clear the timer
+      setSleepTimerRemaining(null);
     }
   };
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.playbackRate = playbackSpeed;
-    }
-  }, [playbackSpeed]);
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
@@ -209,49 +200,62 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  const handleLoadedMetadata = () => {
+  const handleDurationChange = () => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
     }
   };
 
-  const contextValue = {
-    currentEpisode,
-    isPlaying,
-    duration,
-    currentTime,
-    volume,
-    isMuted,
-    audioRef,
-    playbackSpeed,
-    showMiniPlayer,
-    sleepTimerRemaining,
-    progress,
-    playEpisode,
-    togglePlayPause,
-    setVolume,
-    toggleMute,
-    seek,
-    skipForward,
-    skipBackward,
-    setPlaybackSpeed,
-    setShowMiniPlayer,
-    setSleepTimer,
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    // Optionally play next episode here
   };
 
   return (
-    <AudioPlayerContext.Provider value={contextValue}>
+    <AudioPlayerContext.Provider
+      value={{
+        currentEpisode,
+        isPlaying,
+        duration,
+        currentTime,
+        playbackSpeed,
+        volume,
+        isMuted,
+        audioRef,
+        playEpisode,
+        togglePlayPause,
+        setVolume,
+        toggleMute,
+        seek,
+        skipForward,
+        skipBackward,
+        setPlaybackSpeed,
+        setSleepTimer,
+        sleepTimerRemaining,
+        showMiniPlayer,
+        setShowMiniPlayer
+      }}
+    >
+      {children}
       <audio
         ref={audioRef}
-        src={currentEpisode ? currentEpisode.arquivo : ""}
+        src={currentEpisode?.url_audio}
         onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => {
-          console.log('Audio ended');
-          setIsPlaying(false);
-        }}
+        onDurationChange={handleDurationChange}
+        onEnded={handleEnded}
+        style={{ display: 'none' }}
       />
-      {children}
     </AudioPlayerContext.Provider>
   );
+};
+
+export const useAudioPlayer = () => {
+  const context = useContext(AudioPlayerContext);
+  
+  if (context === undefined) {
+    throw new Error('useAudioPlayer must be used within an AudioPlayerProvider');
+  }
+  
+  return context;
 };

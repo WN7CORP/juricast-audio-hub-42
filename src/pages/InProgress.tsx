@@ -1,83 +1,63 @@
 
-import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import { getInProgressEpisodes } from '@/lib/podcast-service';
 import { Link } from 'react-router-dom';
-import { Play, Heart } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useAudioPlayer } from '@/context/AudioPlayerContext';
-import { toggleFavorite } from '@/lib/podcast-service';
-import { toast } from '@/hooks/use-toast';
-import PlaylistItem from '@/components/podcast/PlaylistItem';
 
 const InProgress = () => {
   const { data: inProgressEpisodes = [], isLoading } = useQuery({
     queryKey: ['inProgressEpisodes'],
     queryFn: getInProgressEpisodes
   });
-  
-  const { playEpisode, currentEpisode } = useAudioPlayer();
-  const queryClient = useQueryClient();
-  
-  const handlePlay = (episodeId: number) => {
-    const episode = inProgressEpisodes.find(ep => ep.id === episodeId);
-    if (episode) {
-      playEpisode(episode, true);
-    }
-  };
-  
-  const handleToggleFavorite = (episodeId: number) => {
-    const newFavoriteState = toggleFavorite(episodeId);
-    toast({
-      title: newFavoriteState ? "Adicionado aos favoritos" : "Removido dos favoritos",
-      duration: 2000,
-    });
-    queryClient.invalidateQueries({ queryKey: ['inProgressEpisodes'] });
-  };
 
   return (
     <MainLayout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-2xl font-bold mb-6">Em Progresso</h1>
+      <h1 className="text-2xl font-bold mb-6">Em Progresso</h1>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 gap-4">
-            {[...Array(3)].map((_, index) => (
-              <div key={index} className="bg-juricast-card animate-pulse rounded-lg h-24"></div>
-            ))}
-          </div>
-        ) : inProgressEpisodes.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4">
-            {inProgressEpisodes.map((episode, index) => (
-              <PlaylistItem
-                key={episode.id}
-                episode={episode}
-                index={index + 1}
-                isPlaying={currentEpisode?.id === episode.id}
-                onPlay={() => handlePlay(episode.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-64 bg-juricast-card rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-2">Nada em progresso</h2>
-            <p className="text-juricast-muted text-center mb-4">
-              Você ainda não começou a ouvir nenhum episódio.
-            </p>
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="bg-juricast-card animate-pulse rounded-lg h-24"></div>
+          ))}
+        </div>
+      ) : inProgressEpisodes.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4">
+          {inProgressEpisodes.map(episode => (
             <Link 
-              to="/"
-              className="px-4 py-2 bg-juricast-accent text-white rounded-md hover:bg-juricast-accent/80 transition-colors"
+              key={episode.id} 
+              to={`/podcast/${episode.id}`}
+              className="bg-juricast-card rounded-lg p-4 flex items-center gap-4 hover:ring-1 hover:ring-juricast-accent/50 transition-all"
             >
-              Explorar episódios
+              <img
+                src={episode.imagem_miniatura}
+                alt={episode.titulo}
+                className="w-16 h-16 object-cover rounded-md"
+              />
+              <div className="flex-1">
+                <h3 className="font-medium mb-1 line-clamp-1">{episode.titulo}</h3>
+                <p className="text-sm text-juricast-accent">{episode.area}</p>
+                <div className="mt-2">
+                  <div className="w-full h-1.5 bg-juricast-background rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-juricast-accent rounded-full" 
+                      style={{ width: `${episode.progresso || 0}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-juricast-muted mt-1">{episode.progresso || 0}% concluído</p>
+                </div>
+              </div>
             </Link>
-          </div>
-        )}
-      </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-64 bg-juricast-card rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-2">Nada em progresso</h2>
+          <p className="text-juricast-muted text-center mb-4">
+            Você ainda não começou a ouvir nenhum episódio.
+          </p>
+        </div>
+      )}
     </MainLayout>
   );
 };

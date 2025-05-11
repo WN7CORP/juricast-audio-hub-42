@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, 
@@ -66,11 +67,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ episode }) => {
     }
   }, [isPlaying, waveformData.length]);
 
-  // Modified: Don't automatically play when component mounts
+  // Start playing this episode if it's not already playing
   useEffect(() => {
     if (!isCurrentEpisode && audioRef.current) {
-      // Load the episode but don't auto-play it
-      playEpisode(episode, false);
+      playEpisode(episode);
     }
   }, []);
 

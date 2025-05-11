@@ -5,7 +5,6 @@ export interface PodcastEpisode {
   area: string;
   descricao: string;
   url_audio: string;
-  arquivo: string; // This field is required by the AudioPlayerContext
   imagem_miniatura: string;
   tag: string[];
   data_publicacao?: string;

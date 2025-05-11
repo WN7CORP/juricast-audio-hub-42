@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PodcastEpisode, UserProgress, UserFavorite, AreaCard, SupabaseEpisode } from "./types";
 
@@ -81,8 +82,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
       comentarios: episode.comentarios || 0,
       curtidas: episode.curtidas || 0,
       data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR'),
-      imagem_miniatura: episode.imagem_miniatuta, // Map from database field to interface field
-      arquivo: episode.url_audio // Map the url_audio to arquivo to satisfy the type requirement
+      imagem_miniatura: episode.imagem_miniatuta // Map from database field to interface field
     };
   } catch (error) {
     console.error(`Error in getEpisodeById for ${id}:`, error);
@@ -272,7 +272,6 @@ function formatEpisodes(episodes: any[]): PodcastEpisode[] {
     comentarios: episode.comentarios || 0,
     curtidas: episode.curtidas || 0,
     data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR'),
-    imagem_miniatura: episode.imagem_miniatuta, // Map from database field to our interface field
-    arquivo: episode.url_audio // Map the url_audio to arquivo to satisfy the type requirement
+    imagem_miniatura: episode.imagem_miniatuta // Map from database field to our interface field
   }));
 }
