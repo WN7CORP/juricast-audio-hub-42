@@ -5,6 +5,7 @@ export interface PodcastEpisode {
   area: string;
   descricao: string;
   url_audio: string;
+  arquivo: string; // Add this property that is being used in the context
   imagem_miniatura: string;
   tag: string[];
   data_publicacao?: string;

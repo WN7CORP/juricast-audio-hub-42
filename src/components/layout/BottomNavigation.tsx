@@ -18,7 +18,7 @@ const BottomNavigation = () => {
 
   return (
     <motion.div 
-      className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 pb-safe"
+      className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40 pb-safe"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.3, delay: 0.3 }}

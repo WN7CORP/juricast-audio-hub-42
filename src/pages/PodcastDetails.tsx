@@ -120,55 +120,57 @@ const PodcastDetails = () => {
                 </ul>
               </motion.div>
 
-              {/* Tabs after player */}
+              {/* Wrap Tabs in a div to fix context issue */}
               <div className="mt-6">
-                <Tabs defaultValue="visualizacao" className="w-full">
-                  <TabsList className="w-full grid grid-cols-2 mb-4">
-                    <TabsTrigger value="visualizacao" className="data-[state=active]:text-juricast-accent">Visualização</TabsTrigger>
-                    <TabsTrigger value="detalhes" className="data-[state=active]:text-juricast-accent">Detalhes</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="visualizacao">
-                    <motion.div 
-                      className="bg-juricast-background/40 rounded-lg p-4 mb-4"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <h3 className="font-semibold mb-2">Sobre este episódio</h3>
-                      <p className="text-juricast-muted">{episode.descricao}</p>
-                    </motion.div>
-                  </TabsContent>
-                  
-                  <TabsContent value="detalhes">
-                    <motion.p className="mb-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-                      {episode.descricao}
-                    </motion.p>
+                <React.StrictMode>
+                  <Tabs defaultValue="visualizacao" className="w-full">
+                    <TabsList className="w-full grid grid-cols-2 mb-4">
+                      <TabsTrigger value="visualizacao" className="data-[state=active]:text-juricast-accent">Visualização</TabsTrigger>
+                      <TabsTrigger value="detalhes" className="data-[state=active]:text-juricast-accent">Detalhes</TabsTrigger>
+                    </TabsList>
                     
-                    <motion.div className="mb-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-                      <h3 className="font-medium mb-2">Tags:</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {Array.isArray(episode.tag) && episode.tag.map((tag: string, index: number) => (
-                          <motion.span
-                            key={index}
-                            className="bg-juricast-background/50 px-3 py-1 rounded-full text-sm border border-juricast-card/30"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3, delay: index * 0.1 }}
-                            whileHover={{ scale: 1.05, backgroundColor: "rgba(229, 9, 20, 0.1)" }}
-                          >
-                            {tag}
-                          </motion.span>
-                        ))}
-                      </div>
-                    </motion.div>
+                    <TabsContent value="visualizacao">
+                      <motion.div 
+                        className="bg-juricast-background/40 rounded-lg p-4 mb-4"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <h3 className="font-semibold mb-2">Sobre este episódio</h3>
+                        <p className="text-juricast-muted">{episode.descricao}</p>
+                      </motion.div>
+                    </TabsContent>
                     
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-                      <h3 className="font-medium mb-2">Data de publicação:</h3>
-                      <p className="text-juricast-muted">{episode.data_publicacao || 'Não informada'}</p>
-                    </motion.div>
-                  </TabsContent>
-                </Tabs>
+                    <TabsContent value="detalhes">
+                      <motion.p className="mb-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                        {episode.descricao}
+                      </motion.p>
+                      
+                      <motion.div className="mb-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+                        <h3 className="font-medium mb-2">Tags:</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {Array.isArray(episode.tag) && episode.tag.map((tag: string, index: number) => (
+                            <motion.span
+                              key={index}
+                              className="bg-juricast-background/50 px-3 py-1 rounded-full text-sm border border-juricast-card/30"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3, delay: index * 0.1 }}
+                              whileHover={{ scale: 1.05, backgroundColor: "rgba(229, 9, 20, 0.1)" }}
+                            >
+                              {tag}
+                            </motion.span>
+                          ))}
+                        </div>
+                      </motion.div>
+                      
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+                        <h3 className="font-medium mb-2">Data de publicação:</h3>
+                        <p className="text-juricast-muted">{episode.data_publicacao || 'Não informada'}</p>
+                      </motion.div>
+                    </TabsContent>
+                  </Tabs>
+                </React.StrictMode>
               </div>
 
               {/* Related content */}

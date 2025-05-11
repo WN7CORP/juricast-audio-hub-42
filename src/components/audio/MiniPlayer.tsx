@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Pause, X, SkipForward, SkipBack } from 'lucide-react';
+import { Play, Pause, X, SkipForward, SkipBack, Check } from 'lucide-react';
 import { useAudioPlayer } from '@/context/AudioPlayerContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -36,7 +36,7 @@ const MiniPlayer: React.FC = () => {
     <AnimatePresence>
       {showMiniPlayer && (
         <motion.div 
-          className="mini-player py-3 px-4 mb-24"
+          className="mini-player fixed left-1/2 -translate-x-1/2 bottom-20 md:bottom-4 w-[90%] max-w-md bg-juricast-card/90 backdrop-blur-lg border border-white/10 rounded-lg py-3 px-4 shadow-xl z-40"
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
