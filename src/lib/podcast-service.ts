@@ -77,6 +77,7 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
 // Get episodes by theme
 export async function getEpisodesByTheme(theme: string, area: string): Promise<PodcastEpisode[]> {
   try {
+    // Format the theme string to match how it might be stored in the database
     const formattedTheme = theme
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -92,8 +93,8 @@ export async function getEpisodesByTheme(theme: string, area: string): Promise<P
     const { data, error } = await supabase
       .from('JURIFY')
       .select('*')
-      .eq('tema', formattedTheme)
-      .eq('area', formattedArea)
+      .ilike('tema', `%${formattedTheme}%`)
+      .ilike('area', `%${formattedArea}%`)
       .order('sequencia', { ascending: true });
     
     if (error) {

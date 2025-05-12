@@ -6,6 +6,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import PlaylistItem from '@/components/podcast/PlaylistItem';
 import { getEpisodesByTheme } from '@/lib/podcast-service';
 import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
 const ThemeDetails = () => {
   const { area, theme } = useParams<{area: string, theme: string}>();
@@ -50,10 +51,9 @@ const ThemeDetails = () => {
         </div>
 
         {isLoading ? (
-          <div className="space-y-4">
-            {[...Array(5)].map((_, index) => (
-              <div key={index} className="bg-juricast-card animate-pulse rounded-lg h-20"></div>
-            ))}
+          <div className="flex flex-col items-center justify-center h-64 bg-juricast-card rounded-lg">
+            <Loader2 className="h-8 w-8 animate-spin text-juricast-accent mb-2" />
+            <p className="text-juricast-muted">Carregando episódios...</p>
           </div>
         ) : episodes.length > 0 ? (
           <motion.div
