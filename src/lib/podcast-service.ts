@@ -393,7 +393,7 @@ function getFavoritesData(): Record<number, UserFavorite> {
 }
 
 // Format episodes with additional client-side data
-function formatEpisodes(episodes: any[]): PodcastEpisode[] {
+function formatEpisodes(episodes: SupabaseEpisode[]): PodcastEpisode[] {
   return episodes.map(episode => ({
     ...episode,
     tag: Array.isArray(episode.tag) ? episode.tag : episode.tag ? [episode.tag] : [],
