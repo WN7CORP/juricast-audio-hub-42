@@ -32,6 +32,8 @@ const ThemeDetails = () => {
     }
   };
 
+  console.log('Theme details:', { theme, area, episodes, isLoading });
+
   return (
     <MainLayout>
       <motion.div 

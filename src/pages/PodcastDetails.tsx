@@ -56,13 +56,9 @@ const PodcastDetails = () => {
     return <MainLayout>
       <div className="animate-pulse space-y-8">
         <div className="h-8 bg-juricast-card w-3/4 rounded"></div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <div className="bg-juricast-card rounded-lg p-6 h-96"></div>
-          </div>
-          <div className="lg:col-span-1">
-            <div className="bg-juricast-card rounded-lg p-6 h-64"></div>
-          </div>
+        <div className="grid grid-cols-1 gap-6">
+          <div className="bg-juricast-card rounded-lg p-6 h-96"></div>
+          <div className="bg-juricast-card rounded-lg p-6 h-64"></div>
         </div>
       </div>
     </MainLayout>;
@@ -96,92 +92,86 @@ const PodcastDetails = () => {
           <h1 className="text-2xl font-bold">{episode.titulo}</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <motion.div 
-              className="bg-juricast-card rounded-lg p-6 mb-6 border border-juricast-card/30"
-              initial={{ opacity: 0, y: 20 }}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Audio Player First */}
+          <AudioPlayer 
+            src={episode.url_audio} 
+            title={episode.titulo} 
+            thumbnail={episode.imagem_miniatura} 
+            episodeId={episode.id} 
+          />
+          
+          {/* Episode Details Second */}
+          <motion.div 
+            className="bg-juricast-card rounded-lg p-6 mb-6 border border-juricast-card/30"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-semibold">{episode.titulo}</h2>
+                <p className="text-juricast-accent">{episode.area} - {episode.tema}</p>
+              </div>
+              <motion.button
+                onClick={handleToggleFavorite}
+                className={cn(
+                  "p-2 rounded-full transition-colors",
+                  isFavorite ? "text-juricast-accent" : "text-juricast-muted hover:text-juricast-accent"
+                )}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
+              </motion.button>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.5 }}
             >
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold">{episode.titulo}</h2>
-                  <p className="text-juricast-accent">{episode.area} - {episode.tema}</p>
+              <h3 className="font-medium mb-2">Detalhes:</h3>
+              <p className="mb-4">{episode.descricao}</p>
+              
+              <div className="mb-4">
+                <h3 className="font-medium mb-2">Tags:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {Array.isArray(episode.tag) && episode.tag.map((tag: string, index: number) => (
+                    <motion.span
+                      key={index}
+                      className="bg-juricast-background/50 px-3 py-1 rounded-full text-sm border border-juricast-card/30"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      whileHover={{ scale: 1.05, backgroundColor: "rgba(229, 9, 20, 0.1)" }}
+                    >
+                      {tag}
+                    </motion.span>
+                  ))}
                 </div>
-                <motion.button
-                  onClick={handleToggleFavorite}
-                  className={cn(
-                    "p-2 rounded-full transition-colors",
-                    isFavorite ? "text-juricast-accent" : "text-juricast-muted hover:text-juricast-accent"
-                  )}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
-                </motion.button>
               </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <h3 className="font-medium mb-2">Detalhes:</h3>
-                <p className="mb-4">{episode.descricao}</p>
-                
-                <div className="mb-4">
-                  <h3 className="font-medium mb-2">Tags:</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.isArray(episode.tag) && episode.tag.map((tag: string, index: number) => (
-                      <motion.span
-                        key={index}
-                        className="bg-juricast-background/50 px-3 py-1 rounded-full text-sm border border-juricast-card/30"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                        whileHover={{ scale: 1.05, backgroundColor: "rgba(229, 9, 20, 0.1)" }}
-                      >
-                        {tag}
-                      </motion.span>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-
-          <div className="lg:col-span-1">
-            <AudioPlayer 
-              src={episode.url_audio} 
-              title={episode.titulo} 
-              thumbnail={episode.imagem_miniatura} 
-              episodeId={episode.id} 
-            />
-
-            <motion.div 
-              className="mt-6 bg-juricast-card rounded-lg p-4 border border-juricast-card/30"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-            >
-              <h3 className="font-medium mb-4">Informações do Episódio</h3>
-              <ul className="space-y-3">
-                <li className="flex justify-between">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
                   <span className="text-juricast-muted">Área:</span>
-                  <span>{episode.area}</span>
-                </li>
-                <li className="flex justify-between">
+                  <p>{episode.area}</p>
+                </div>
+                <div>
                   <span className="text-juricast-muted">Tema:</span>
-                  <span>{episode.tema}</span>
-                </li>
-                <li className="flex justify-between">
+                  <p>{episode.tema}</p>
+                </div>
+                <div>
                   <span className="text-juricast-muted">Sequência:</span>
-                  <span>{episode.sequencia || 'Não informada'}</span>
-                </li>
-              </ul>
+                  <p>{episode.sequencia || 'Não informada'}</p>
+                </div>
+                <div>
+                  <span className="text-juricast-muted">Data:</span>
+                  <p>{episode.data_publicacao || 'Não informada'}</p>
+                </div>
+              </div>
             </motion.div>
-          </div>
+          </motion.div>
         </div>
       </motion.div>
     </MainLayout>

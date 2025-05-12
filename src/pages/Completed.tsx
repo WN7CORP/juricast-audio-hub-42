@@ -12,17 +12,14 @@ const Completed = () => {
     queryFn: getCompletedEpisodes
   });
 
+  console.log("Completed episodes:", completedEpisodes);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
   };
 
   return (
@@ -52,7 +49,10 @@ const Completed = () => {
             animate="visible"
           >
             {completedEpisodes.map((episode, index) => (
-              <motion.div key={episode.id} variants={itemVariants}>
+              <motion.div key={episode.id} variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 }
+              }}>
                 <PlaylistItem
                   episode={episode}
                   index={index + 1}
@@ -63,7 +63,10 @@ const Completed = () => {
         ) : (
           <motion.div 
             className="flex flex-col items-center justify-center h-64 bg-juricast-card rounded-lg p-6"
-            variants={itemVariants}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0 }
+            }}
             initial="hidden"
             animate="visible"
           >
