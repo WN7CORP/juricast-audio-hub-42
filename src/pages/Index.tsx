@@ -6,7 +6,7 @@ import PlaylistItem from '@/components/podcast/PlaylistItem';
 import AreaCard from '@/components/podcast/AreaCard';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getFeaturedEpisodes, getRecentEpisodes, getInProgressEpisodes, getAllAreas } from '@/lib/podcast-service';
+import { getFeaturedEpisodes, getRecentEpisodes, getInProgressEpisodes, getAllAreas, saveUserIP } from '@/lib/podcast-service';
 import { PodcastEpisode, AreaCard as AreaCardType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +18,11 @@ const Index = () => {
     queryKey: ['inProgressEpisodes'],
     queryFn: getInProgressEpisodes
   });
+  
+  // Save user IP on first load for persistent data
+  useEffect(() => {
+    saveUserIP();
+  }, []);
   
   // Load areas
   useEffect(() => {

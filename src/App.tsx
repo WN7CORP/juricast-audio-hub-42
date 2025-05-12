@@ -9,7 +9,9 @@ import Index from "./pages/Index";
 import PodcastDetails from "./pages/PodcastDetails";
 import Favorites from "./pages/Favorites";
 import InProgress from "./pages/InProgress";
+import Completed from "./pages/Completed";
 import Category from "./pages/Category";
+import ThemeDetails from "./pages/ThemeDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -31,7 +33,9 @@ const AppRoutes = () => {
         <Route path="/podcast/:id" element={<PodcastDetails />} />
         <Route path="/favoritos" element={<Favorites />} />
         <Route path="/em-progresso" element={<InProgress />} />
+        <Route path="/concluidos" element={<Completed />} />
         <Route path="/categoria/:category" element={<Category />} />
+        <Route path="/categoria/:area/tema/:theme" element={<ThemeDetails />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

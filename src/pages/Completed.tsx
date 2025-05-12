@@ -4,12 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import PlaylistItem from '@/components/podcast/PlaylistItem';
 import { motion } from 'framer-motion';
-import { getInProgressEpisodes } from '@/lib/podcast-service';
+import { getCompletedEpisodes } from '@/lib/podcast-service';
 
-const InProgress = () => {
-  const { data: inProgressEpisodes = [], isLoading } = useQuery({
-    queryKey: ['inProgressEpisodes'],
-    queryFn: getInProgressEpisodes
+const Completed = () => {
+  const { data: completedEpisodes = [], isLoading } = useQuery({
+    queryKey: ['completedEpisodes'],
+    queryFn: getCompletedEpisodes
   });
 
   const containerVariants = {
@@ -34,8 +34,8 @@ const InProgress = () => {
         className="space-y-6"
       >
         <div>
-          <h1 className="text-2xl font-bold mb-2">Em Progresso</h1>
-          <p className="text-juricast-muted">Continue de onde parou</p>
+          <h1 className="text-2xl font-bold mb-2">Concluídos</h1>
+          <p className="text-juricast-muted">Episódios que você já terminou de ouvir</p>
         </div>
 
         {isLoading ? (
@@ -44,14 +44,14 @@ const InProgress = () => {
               <div key={i} className="bg-juricast-card animate-pulse rounded-lg h-16"></div>
             ))}
           </div>
-        ) : inProgressEpisodes.length > 0 ? (
+        ) : completedEpisodes.length > 0 ? (
           <motion.div
             className="space-y-3 mb-20"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-            {inProgressEpisodes.map((episode, index) => (
+            {completedEpisodes.map((episode, index) => (
               <motion.div key={episode.id} variants={itemVariants}>
                 <PlaylistItem
                   episode={episode}
@@ -67,10 +67,9 @@ const InProgress = () => {
             initial="hidden"
             animate="visible"
           >
-            <h2 className="text-xl font-semibold mb-2">Nenhum episódio em progresso</h2>
+            <h2 className="text-xl font-semibold mb-2">Nenhum episódio concluído</h2>
             <p className="text-juricast-muted text-center mb-4">
-              Você ainda não começou a ouvir nenhum episódio. 
-              Comece a explorar o catálogo e seus episódios começados aparecerão aqui.
+              Você ainda não concluiu nenhum episódio. Comece a ouvir e retorne aqui depois.
             </p>
           </motion.div>
         )}
@@ -79,4 +78,4 @@ const InProgress = () => {
   );
 };
 
-export default InProgress;
+export default Completed;

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Heart, Pause, Gavel, Book, Scale, File } from 'lucide-react';
+import { Play, Heart, Pause, Gavel, Book, Scale, File, Check } from 'lucide-react';
 import { PodcastEpisode } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -42,6 +42,9 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
     return <File size={16} className="text-juricast-accent" />;
   };
 
+  // Check if episode is completed (100%)
+  const isCompleted = episode.progresso === 100;
+
   // Animation variants
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -79,13 +82,18 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
               {isPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
             </motion.button>
           </div>
+          {isCompleted && (
+            <div className="absolute top-0 right-0 bg-green-500 p-1 rounded-bl-md">
+              <Check size={12} className="text-white" />
+            </div>
+          )}
         </div>
         
-        <div className="flex-1 ml-4 mr-2">
-          <h3 className="font-medium text-sm line-clamp-1">{episode.titulo}</h3>
+        <div className="flex-1 ml-4 mr-2 overflow-hidden">
+          <h3 className="font-medium text-sm line-clamp-2 sm:line-clamp-1">{episode.titulo}</h3>
           <div className="flex items-center text-juricast-accent text-xs gap-1">
             {getAreaIcon()}
-            <span>{episode.area}</span>
+            <span className="truncate">{episode.area} - {episode.tema}</span>
           </div>
           
           {episode.progresso && episode.progresso > 0 && episode.progresso < 100 && (

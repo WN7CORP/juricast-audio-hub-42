@@ -2465,6 +2465,42 @@ export type Database = {
           },
         ]
       }
+      JURIFY: {
+        Row: {
+          area: string | null
+          descricao: string | null
+          id: number
+          imagem_miniatura: string | null
+          sequencia: string | null
+          tag: string | null
+          tema: string | null
+          titulo: string | null
+          url_audio: string | null
+        }
+        Insert: {
+          area?: string | null
+          descricao?: string | null
+          id?: number
+          imagem_miniatura?: string | null
+          sequencia?: string | null
+          tag?: string | null
+          tema?: string | null
+          titulo?: string | null
+          url_audio?: string | null
+        }
+        Update: {
+          area?: string | null
+          descricao?: string | null
+          id?: number
+          imagem_miniatura?: string | null
+          sequencia?: string | null
+          tag?: string | null
+          tema?: string | null
+          titulo?: string | null
+          url_audio?: string | null
+        }
+        Relationships: []
+      }
       Jurisflix: {
         Row: {
           ano: string | null
@@ -2959,6 +2995,27 @@ export type Database = {
           progress?: number
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      playlist_direito: {
+        Row: {
+          Area: string | null
+          Categoria: string | null
+          id: number
+          Playlist: string | null
+        }
+        Insert: {
+          Area?: string | null
+          Categoria?: string | null
+          id?: number
+          Playlist?: string | null
+        }
+        Update: {
+          Area?: string | null
+          Categoria?: string | null
+          id?: number
+          Playlist?: string | null
         }
         Relationships: []
       }

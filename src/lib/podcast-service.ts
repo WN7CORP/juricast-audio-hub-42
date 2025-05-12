@@ -1,17 +1,36 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { PodcastEpisode, UserProgress, UserFavorite, AreaCard, SupabaseEpisode } from "./types";
+import { PodcastEpisode, UserProgress, UserFavorite, AreaCard, ThemeCard, SupabaseEpisode } from "./types";
 
 // Local storage keys
 const PROGRESS_STORAGE_KEY = 'juricast_progress';
 const FAVORITES_STORAGE_KEY = 'juricast_favorites';
+const USER_IP_KEY = 'juricast_user_ip';
 
-// Get all podcast episodes
+// Get IP to identify users without authentication
+export async function saveUserIP() {
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+    const data = await response.json();
+    localStorage.setItem(USER_IP_KEY, data.ip);
+    return data.ip;
+  } catch (error) {
+    console.error("Error fetching IP:", error);
+    return null;
+  }
+}
+
+export function getUserIP() {
+  return localStorage.getItem(USER_IP_KEY) || 'anonymous';
+}
+
+// Get all podcast episodes from JURIFY table
 export async function getAllEpisodes(): Promise<PodcastEpisode[]> {
   try {
     const { data, error } = await supabase
-      .from('podcast_tabela')
-      .select('*');
+      .from('JURIFY')
+      .select('*')
+      .order('sequencia', { ascending: true });
     
     if (error) {
       console.error("Error fetching episodes:", error);
@@ -38,9 +57,10 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
     console.log("Searching for area:", formattedArea);
     
     const { data, error } = await supabase
-      .from('podcast_tabela')
+      .from('JURIFY')
       .select('*')
-      .ilike('area', `%${formattedArea}%`);
+      .ilike('area', `%${formattedArea}%`)
+      .order('sequencia', { ascending: true });
     
     if (error) {
       console.error(`Error fetching episodes for area ${area}:`, error);
@@ -55,11 +75,46 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
   }
 }
 
+// Get episodes by theme
+export async function getEpisodesByTheme(theme: string, area: string): Promise<PodcastEpisode[]> {
+  try {
+    const formattedTheme = theme
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+
+    const formattedArea = area
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+    
+    console.log("Searching for theme:", formattedTheme, "in area:", formattedArea);
+    
+    const { data, error } = await supabase
+      .from('JURIFY')
+      .select('*')
+      .eq('tema', formattedTheme)
+      .eq('area', formattedArea)
+      .order('sequencia', { ascending: true });
+    
+    if (error) {
+      console.error(`Error fetching episodes for theme ${theme}:`, error);
+      throw error;
+    }
+
+    console.log(`Found ${data?.length || 0} episodes for theme ${formattedTheme}`);
+    return formatEpisodes(data || []);
+  } catch (error) {
+    console.error(`Error in getEpisodesByTheme for ${theme}:`, error);
+    return [];
+  }
+}
+
 // Get episode by ID
 export async function getEpisodeById(id: number): Promise<PodcastEpisode | null> {
   try {
     const { data, error } = await supabase
-      .from('podcast_tabela')
+      .from('JURIFY')
       .select('*')
       .eq('id', id)
       .single();
@@ -71,18 +126,15 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
 
     if (!data) return null;
     
-    // Use a proper cast to handle the type mismatch
-    const episode = data as unknown as SupabaseEpisode;
-    
+    // Format the episode data
     return {
-      ...episode,
-      tag: Array.isArray(episode.tag) ? episode.tag : [episode.tag],
-      progresso: getUserProgress(episode.id)?.progress || 0,
-      favorito: getUserFavorite(episode.id)?.isFavorite || false,
-      comentarios: episode.comentarios || 0,
-      curtidas: episode.curtidas || 0,
-      data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR'),
-      imagem_miniatura: episode.imagem_miniatuta // Map from database field to interface field
+      ...data,
+      tag: Array.isArray(data.tag) ? data.tag : data.tag ? [data.tag] : [],
+      progresso: getUserProgress(data.id)?.progress || 0,
+      favorito: getUserFavorite(data.id)?.isFavorite || false,
+      comentarios: data.comentarios || 0,
+      curtidas: data.curtidas || 0,
+      data_publicacao: data.data_publicacao || new Date().toLocaleDateString('pt-BR'),
     };
   } catch (error) {
     console.error(`Error in getEpisodeById for ${id}:`, error);
@@ -94,7 +146,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
 export async function getAllAreas(): Promise<AreaCard[]> {
   try {
     const { data, error } = await supabase
-      .from('podcast_tabela')
+      .from('JURIFY')
       .select('area');
     
     if (error) {
@@ -127,30 +179,92 @@ export async function getAllAreas(): Promise<AreaCard[]> {
   }
 }
 
+// Get all themes for a specific area
+export async function getThemesByArea(area: string): Promise<ThemeCard[]> {
+  try {
+    const formattedArea = area
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+    
+    const { data, error } = await supabase
+      .from('JURIFY')
+      .select('tema, area')
+      .eq('area', formattedArea);
+    
+    if (error) {
+      console.error(`Error fetching themes for area ${area}:`, error);
+      throw error;
+    }
+
+    const themesMap = new Map<string, {count: number, area: string}>();
+    
+    // Count episodes per theme
+    data?.forEach(episode => {
+      if (episode.tema) {
+        const current = themesMap.get(episode.tema) || {count: 0, area: episode.area};
+        themesMap.set(episode.tema, {
+          count: current.count + 1,
+          area: episode.area
+        });
+      }
+    });
+    
+    // Convert to array of theme cards
+    const themes: ThemeCard[] = Array.from(themesMap.entries()).map(([name, info]) => ({
+      name,
+      episodeCount: info.count,
+      slug: name.toLowerCase().replace(/\s+/g, '-'),
+      area: formattedArea,
+      image: getThemeImage(name)
+    }));
+    
+    return themes.sort((a, b) => a.name.localeCompare(b.name));
+  } catch (error) {
+    console.error(`Error in getThemesByArea for ${area}:`, error);
+    return [];
+  }
+}
+
 // Helper function to get representative image for an area
 function getAreaImage(areaName: string): string {
   // Try to find an episode with this area to use its image
   return '/placeholder.svg'; // Fallback to placeholder
 }
 
-// Get featured episodes (most liked)
-export function getFeaturedEpisodes(): Promise<PodcastEpisode[]> {
-  return getAllEpisodes().then(episodes => 
-    episodes
-      .sort((a, b) => (b.curtidas || 0) - (a.curtidas || 0))
-      .slice(0, 6)
-  );
+// Helper function to get representative image for a theme
+function getThemeImage(themeName: string): string {
+  // Try to find an episode with this theme to use its image
+  return '/placeholder.svg'; // Fallback to placeholder
+}
+
+// Get featured episodes (most recent from each area)
+export async function getFeaturedEpisodes(): Promise<PodcastEpisode[]> {
+  return getAllEpisodes().then(episodes => {
+    // Group episodes by area
+    const episodesByArea = episodes.reduce<Record<string, PodcastEpisode[]>>((acc, episode) => {
+      if (!acc[episode.area]) {
+        acc[episode.area] = [];
+      }
+      acc[episode.area].push(episode);
+      return acc;
+    }, {});
+    
+    // Get the most recent episode from each area
+    const featuredEpisodes = Object.values(episodesByArea)
+      .map(areaEpisodes => areaEpisodes[0])
+      .sort((a, b) => (b.sequencia || '').localeCompare(a.sequencia || ''))
+      .slice(0, 6);
+      
+    return featuredEpisodes;
+  });
 }
 
 // Get recent episodes
-export function getRecentEpisodes(): Promise<PodcastEpisode[]> {
+export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
   return getAllEpisodes().then(episodes => 
     episodes
-      .sort((a, b) => {
-        const dateA = a.data_publicacao ? new Date(a.data_publicacao).getTime() : 0;
-        const dateB = b.data_publicacao ? new Date(b.data_publicacao).getTime() : 0;
-        return dateB - dateA;
-      })
+      .sort((a, b) => (b.sequencia || '').localeCompare(a.sequencia || ''))
       .slice(0, 6)
   );
 }
@@ -194,6 +308,23 @@ export function getInProgressEpisodes(): Promise<PodcastEpisode[]> {
     );
   } catch (error) {
     console.error("Error getting in-progress episodes:", error);
+    return Promise.resolve([]);
+  }
+}
+
+export function getCompletedEpisodes(): Promise<PodcastEpisode[]> {
+  try {
+    const progressData = getProgressData();
+    const episodeIds = Object.keys(progressData).map(Number);
+    
+    return getAllEpisodes().then(episodes => 
+      episodes.filter(episode => 
+        episodeIds.includes(episode.id) && 
+        progressData[episode.id].progress === 100
+      )
+    );
+  } catch (error) {
+    console.error("Error getting completed episodes:", error);
     return Promise.resolve([]);
   }
 }
@@ -272,6 +403,5 @@ function formatEpisodes(episodes: any[]): PodcastEpisode[] {
     comentarios: episode.comentarios || 0,
     curtidas: episode.curtidas || 0,
     data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR'),
-    imagem_miniatura: episode.imagem_miniatuta // Map from database field to our interface field
   }));
 }

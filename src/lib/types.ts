@@ -7,6 +7,8 @@ export interface PodcastEpisode {
   url_audio: string;
   imagem_miniatura: string;
   tag: string[];
+  tema: string;
+  sequencia: string;
   data_publicacao?: string;
   comentarios?: number;
   curtidas?: number;
@@ -32,6 +34,14 @@ export interface AreaCard {
   slug: string;
 }
 
+export interface ThemeCard {
+  name: string;
+  episodeCount: number;
+  image?: string;
+  slug: string;
+  area: string;
+}
+
 // Interface for the type of return from Supabase
 export interface SupabaseEpisode {
   id: number;
@@ -39,8 +49,10 @@ export interface SupabaseEpisode {
   area: string;
   descricao: string;
   url_audio: string;
-  imagem_miniatuta: string;  // Database column name
+  imagem_miniatura: string;
   tag: string | string[];
+  tema: string;
+  sequencia: string;
   data_publicacao?: string;
   comentarios?: number;
   curtidas?: number;
