@@ -83,11 +83,13 @@
     @apply bg-juricast-background text-juricast-text overflow-x-hidden;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
   }
-  
+}
+
+@layer base {  
   html, body {
     position: relative;
     height: 100%;
-    overflow-x-hidden;
+    overflow-x: hidden;
     width: 100%;
   }
 }
