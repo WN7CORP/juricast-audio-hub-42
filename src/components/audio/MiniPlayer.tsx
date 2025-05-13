@@ -4,13 +4,19 @@ import { useAudioPlayer } from '@/context/AudioPlayerContext';
 import { Play, Pause, SkipForward, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const MiniPlayer = () => {
   const { state, play, pause, resume, skipForward, closeMiniPlayer } = useAudioPlayer();
   const { currentEpisode, isPlaying, showMiniPlayer, currentTime, duration } = state;
+  const location = useLocation();
   
-  if (!showMiniPlayer || !currentEpisode) return null;
+  // Don't show mini player if we're already on the podcast detail page for the current episode
+  const isOnEpisodePage = location.pathname.startsWith('/podcast/') && 
+                          currentEpisode && 
+                          location.pathname === `/podcast/${currentEpisode.id}`;
+  
+  if (!showMiniPlayer || !currentEpisode || isOnEpisodePage) return null;
   
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
   
