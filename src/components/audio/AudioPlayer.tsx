@@ -223,7 +223,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
               duration: 0.3
             }}
           >
-            {/* Thumbnail with audio visualizer overlay */}
+            {/* Thumbnail with pulsating overlay */}
             <img 
               src={thumbnail || '/placeholder.svg'} 
               alt={title} 
@@ -242,7 +242,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 ease: "easeInOut" 
               }}
             >
-              {/* Audio Visualization Circle - Always visible when playing */}
+              {/* Advanced Audio Visualization Circle */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="relative w-32 h-32 flex items-center justify-center">
                   <AnimatePresence>
@@ -290,6 +290,19 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                   </AnimatePresence>
                 </div>
               </div>
+              
+              <motion.button 
+                onClick={handlePlayPause} 
+                className="w-16 h-16 flex items-center justify-center rounded-full bg-juricast-accent/90 text-white hover:bg-juricast-accent transition-colors z-10" 
+                whileHover={{
+                  scale: 1.1
+                }} 
+                whileTap={{
+                  scale: 0.9
+                }}
+              >
+                {isPlaying ? <Pause size={28} /> : <Play size={28} className="ml-1" />}
+              </motion.button>
             </motion.div>
           </motion.div>
         </div>
@@ -312,7 +325,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           <span>{formatTime(duration)}</span>
         </div>
 
-        {/* Enhanced waveform visualization - Always visible */}
+        {/* Enhanced waveform visualization */}
         <div className="waveform mb-4 flex h-16 items-end justify-center">
           {visualizerData.map((value, index) => (
             <motion.div 
@@ -434,8 +447,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             </AnimatePresence>
           </div>
           
-          {/* Sleep timer with improved UI */}
-          <div className="relative z-30">
+          {/* Sleep timer */}
+          <div className="relative">
             <motion.button
               onClick={() => setShowSleepTimer(!showSleepTimer)}
               whileHover={{ scale: 1.1 }}
@@ -457,7 +470,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute bottom-full right-0 mb-2 bg-juricast-card border border-juricast-card/30 rounded-lg p-3 shadow-lg z-40 w-48"
+                  className="absolute bottom-full left-0 mb-2 bg-juricast-card border border-juricast-card/30 rounded-lg p-3 shadow-lg z-20 w-48"
                 >
                   <h4 className="text-sm font-medium mb-2">Sleep Timer</h4>
                   
