@@ -2465,6 +2465,48 @@ export type Database = {
           },
         ]
       }
+      juriflix: {
+        Row: {
+          ano: string | null
+          beneficios: string | null
+          capa: string | null
+          id: number
+          link: string | null
+          nome: string | null
+          nota: string | null
+          plataforma: string | null
+          sinopse: string | null
+          tipo: string | null
+          trailer: string | null
+        }
+        Insert: {
+          ano?: string | null
+          beneficios?: string | null
+          capa?: string | null
+          id?: number
+          link?: string | null
+          nome?: string | null
+          nota?: string | null
+          plataforma?: string | null
+          sinopse?: string | null
+          tipo?: string | null
+          trailer?: string | null
+        }
+        Update: {
+          ano?: string | null
+          beneficios?: string | null
+          capa?: string | null
+          id?: number
+          link?: string | null
+          nome?: string | null
+          nota?: string | null
+          plataforma?: string | null
+          sinopse?: string | null
+          tipo?: string | null
+          trailer?: string | null
+        }
+        Relationships: []
+      }
       JURIFY: {
         Row: {
           area: string | null
