@@ -5,14 +5,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import AudioPlayer from '@/components/audio/AudioPlayer';
 import { getEpisodeById, toggleFavorite, saveUserIP } from '@/lib/podcast-service';
-import { Heart, ArrowLeft } from 'lucide-react';
+import { Heart, ArrowLeft, Share2, ListMusic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { useAudioPlayer } from '@/context/AudioPlayerContext';
 
 const PodcastDetails = () => {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const { play } = useAudioPlayer();
   const episodeId = parseInt(id || '0');
   
   const { data: episode, isLoading } = useQuery({
@@ -33,6 +35,13 @@ const PodcastDetails = () => {
       setIsFavorite(episode.favorito || false);
     }
   }, [episode]);
+
+  // Play the episode when it loads
+  useEffect(() => {
+    if (episode) {
+      play(episode);
+    }
+  }, [episode, play]);
   
   const handleToggleFavorite = () => {
     if (!episode) return;
@@ -50,6 +59,40 @@ const PodcastDetails = () => {
       title: newStatus ? "Adicionado aos favoritos" : "Removido dos favoritos",
       description: newStatus ? "Este episódio foi adicionado à sua lista de favoritos." : "Este episódio foi removido da sua lista de favoritos."
     });
+  };
+
+  const handleShareEpisode = () => {
+    if (!episode) return;
+    
+    // Try to use Web Share API if available
+    if (navigator.share) {
+      navigator.share({
+        title: episode.titulo,
+        text: episode.descricao,
+        url: window.location.href
+      })
+        .then(() => toast({
+          title: "Compartilhado com sucesso",
+          description: "O link do episódio foi compartilhado."
+        }))
+        .catch(err => {
+          console.error("Error sharing:", err);
+          // Fallback to copy to clipboard
+          copyToClipboard();
+        });
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      copyToClipboard();
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => toast({
+        title: "Link copiado",
+        description: "O link do episódio foi copiado para a área de transferência."
+      }))
+      .catch(err => console.error("Failed to copy:", err));
   };
   
   if (isLoading) {
@@ -83,13 +126,27 @@ const PodcastDetails = () => {
   return (
     <MainLayout>
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>
-        <div className="mb-6 flex items-center">
-          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Link to="/" className="mr-4 p-2 bg-juricast-card hover:bg-juricast-accent hover:text-white rounded-full transition-all">
-              <ArrowLeft size={20} />
-            </Link>
-          </motion.div>
-          <h1 className="text-2xl font-bold">{episode.titulo}</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center">
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Link to="/" className="mr-4 p-2 bg-juricast-card hover:bg-juricast-accent hover:text-white rounded-full transition-all">
+                <ArrowLeft size={20} />
+              </Link>
+            </motion.div>
+            <h1 className="text-2xl font-bold truncate">{episode.titulo}</h1>
+          </div>
+          
+          <div className="flex gap-2">
+            <motion.button
+              onClick={handleShareEpisode}
+              className="p-2 rounded-full bg-juricast-card hover:bg-juricast-background/80 transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              aria-label="Compartilhar episódio"
+            >
+              <Share2 size={20} />
+            </motion.button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6">
@@ -113,17 +170,19 @@ const PodcastDetails = () => {
                 <h2 className="text-xl font-semibold">{episode.titulo}</h2>
                 <p className="text-juricast-accent">{episode.area} - {episode.tema}</p>
               </div>
-              <motion.button
-                onClick={handleToggleFavorite}
-                className={cn(
-                  "p-2 rounded-full transition-colors",
-                  isFavorite ? "text-juricast-accent" : "text-juricast-muted hover:text-juricast-accent"
-                )}
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
-              </motion.button>
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={handleToggleFavorite}
+                  className={cn(
+                    "p-2 rounded-full transition-colors",
+                    isFavorite ? "text-juricast-accent" : "text-juricast-muted hover:text-juricast-accent"
+                  )}
+                  whileHover={{ scale: 1.2 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
+                </motion.button>
+              </div>
             </div>
 
             <motion.div

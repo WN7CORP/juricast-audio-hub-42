@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
+import MiniPlayer from "@/components/audio/MiniPlayer";
 import Index from "./pages/Index";
 import PodcastDetails from "./pages/PodcastDetails";
 import Favorites from "./pages/Favorites";
@@ -27,29 +29,34 @@ const AppRoutes = () => {
   const location = useLocation();
   
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Index />} />
-        <Route path="/podcast/:id" element={<PodcastDetails />} />
-        <Route path="/favoritos" element={<Favorites />} />
-        <Route path="/em-progresso" element={<InProgress />} />
-        <Route path="/concluidos" element={<Completed />} />
-        <Route path="/categoria/:category" element={<Category />} />
-        <Route path="/categoria/:area/tema/:theme" element={<ThemeDetails />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Index />} />
+          <Route path="/podcast/:id" element={<PodcastDetails />} />
+          <Route path="/favoritos" element={<Favorites />} />
+          <Route path="/em-progresso" element={<InProgress />} />
+          <Route path="/concluidos" element={<Completed />} />
+          <Route path="/categoria/:category" element={<Category />} />
+          <Route path="/categoria/:area/tema/:theme" element={<ThemeDetails />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AnimatePresence>
+      <MiniPlayer />
+    </>
   );
 };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <AudioPlayerProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AudioPlayerProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

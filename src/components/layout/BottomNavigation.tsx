@@ -19,12 +19,15 @@ const BottomNavigation = () => {
 
   return (
     <motion.div 
-      className="fixed bottom-0 left-0 right-0 z-50 pb-safe bg-juricast-background flex justify-center"
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
+      className="floating-bottom-nav"
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3, delay: 0.3 }}
     >
-      <div className="max-w-md w-full bg-juricast-card/80 backdrop-blur-lg border border-white/10 rounded-t-lg px-4 py-3 shadow-xl flex justify-between">
+      <motion.div 
+        className="glassmorphism py-3 px-2 rounded-full shadow-xl flex justify-around items-center"
+        whileHover={{ y: -2 }}
+      >
         {navItems.map((item) => {
           const isActive = path === item.href || 
                         (item.href === "/?sort=categorias" && path.includes("/categoria"));
@@ -34,14 +37,14 @@ const BottomNavigation = () => {
             <Link
               key={item.label}
               to={item.href}
-              className="flex flex-col items-center relative"
+              className="flex flex-col items-center relative px-2"
             >
               <motion.div
                 className={cn(
                   "p-2 rounded-full transition-all",
                   isActive 
-                    ? "bg-juricast-accent text-juricast-text" 
-                    : "text-juricast-muted hover:text-juricast-text"
+                    ? "bg-juricast-accent text-white" 
+                    : "text-white/70 hover:text-white"
                 )}
                 whileHover={{ scale: 1.1, y: -4 }}
                 whileTap={{ scale: 0.9 }}
@@ -56,14 +59,14 @@ const BottomNavigation = () => {
               </motion.div>
               <span className={cn(
                 "text-xs mt-1",
-                isActive ? "text-juricast-text" : "text-juricast-muted"
+                isActive ? "text-white" : "text-white/70"
               )}>
                 {item.label}
               </span>
             </Link>
           );
         })}
-      </div>
+      </motion.div>
     </motion.div>
   );
 };
