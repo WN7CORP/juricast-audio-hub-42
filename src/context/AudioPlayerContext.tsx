@@ -16,6 +16,7 @@ const initialState: AudioPlayerState = {
   playbackRate: 1,
   showMiniPlayer: false,
   queue: [],
+  currentRoute: '/'
 };
 
 // Types of actions for the reducer
@@ -32,7 +33,8 @@ type AudioPlayerAction =
   | { type: 'HIDE_MINI_PLAYER' }
   | { type: 'ADD_TO_QUEUE', payload: PodcastEpisode }
   | { type: 'REMOVE_FROM_QUEUE', payload: number }
-  | { type: 'CLEAR_QUEUE' };
+  | { type: 'CLEAR_QUEUE' }
+  | { type: 'UPDATE_CURRENT_ROUTE', payload: string };
 
 // Reducer function to handle state changes
 function audioPlayerReducer(state: AudioPlayerState, action: AudioPlayerAction): AudioPlayerState {
@@ -104,6 +106,11 @@ function audioPlayerReducer(state: AudioPlayerState, action: AudioPlayerAction):
       return {
         ...state,
         queue: [],
+      };
+    case 'UPDATE_CURRENT_ROUTE':
+      return {
+        ...state,
+        currentRoute: action.payload,
       };
     default:
       return state;
@@ -329,6 +336,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     dispatch({ type: 'PLAY', payload: {...initialState.currentEpisode} as PodcastEpisode });
   };
 
+  const updateCurrentRoute = (route: string) => {
+    dispatch({ type: 'UPDATE_CURRENT_ROUTE', payload: route });
+  };
+
   const value: AudioPlayerContextType = {
     state,
     play,
@@ -343,7 +354,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     addToQueue,
     removeFromQueue,
     clearQueue,
-    closeMiniPlayer
+    closeMiniPlayer,
+    updateCurrentRoute
   };
 
   return (

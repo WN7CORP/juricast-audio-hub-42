@@ -19,13 +19,13 @@ const BottomNavigation = () => {
 
   return (
     <motion.div 
-      className="floating-bottom-nav"
+      className="floating-bottom-nav pb-safe"
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3, delay: 0.3 }}
     >
       <motion.div 
-        className="glassmorphism py-3 px-2 rounded-full shadow-xl flex justify-around items-center"
+        className="glassmorphism py-3 px-2 mb-4 rounded-full shadow-xl flex justify-around items-center"
         whileHover={{ y: -2 }}
       >
         {navItems.map((item) => {

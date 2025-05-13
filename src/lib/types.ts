@@ -69,6 +69,7 @@ export interface AudioPlayerState {
   playbackRate: number;
   showMiniPlayer: boolean;
   queue: PodcastEpisode[];
+  currentRoute: string;
 }
 
 export interface AudioPlayerContextType {
@@ -86,4 +87,5 @@ export interface AudioPlayerContextType {
   removeFromQueue: (episodeId: number) => void;
   clearQueue: () => void;
   closeMiniPlayer: () => void;
+  updateCurrentRoute: (route: string) => void;
 }

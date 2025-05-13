@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
+import { useAudioPlayer } from "@/context/AudioPlayerContext";
 import MiniPlayer from "@/components/audio/MiniPlayer";
 import Index from "./pages/Index";
 import PodcastDetails from "./pages/PodcastDetails";
@@ -15,6 +16,7 @@ import Completed from "./pages/Completed";
 import Category from "./pages/Category";
 import ThemeDetails from "./pages/ThemeDetails";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,11 +27,23 @@ const queryClient = new QueryClient({
   },
 });
 
+const RouteChangeTracker = () => {
+  const location = useLocation();
+  const { updateCurrentRoute } = useAudioPlayer();
+  
+  useEffect(() => {
+    updateCurrentRoute(location.pathname);
+  }, [location, updateCurrentRoute]);
+  
+  return null;
+};
+
 const AppRoutes = () => {
   const location = useLocation();
   
   return (
     <>
+      <RouteChangeTracker />
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Index />} />

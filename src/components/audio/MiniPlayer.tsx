@@ -4,13 +4,21 @@ import { useAudioPlayer } from '@/context/AudioPlayerContext';
 import { Play, Pause, SkipForward, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const MiniPlayer = () => {
+  const location = useLocation();
   const { state, play, pause, resume, skipForward, closeMiniPlayer } = useAudioPlayer();
-  const { currentEpisode, isPlaying, showMiniPlayer, currentTime, duration } = state;
+  const { currentEpisode, isPlaying, showMiniPlayer, currentTime, duration, currentRoute } = state;
   
-  if (!showMiniPlayer || !currentEpisode) return null;
+  // Check if we're on a podcast details page and if it matches our current episode
+  const isPodcastDetailsPage = location.pathname.includes('/podcast/');
+  const isCurrentEpisodePage = currentEpisode && location.pathname.includes(`/podcast/${currentEpisode.id}`);
+  
+  // Only show mini player if we're not on the podcast details page for the current episode
+  const shouldShowMiniPlayer = showMiniPlayer && currentEpisode && !isCurrentEpisodePage;
+  
+  if (!shouldShowMiniPlayer) return null;
   
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
   
@@ -27,7 +35,7 @@ const MiniPlayer = () => {
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
-        className="mini-player p-2 z-50 mb-16"
+        className="mini-player p-2 z-50 mb-24"
       >
         <div className="relative">
           {/* Progress bar at the top of mini player */}
