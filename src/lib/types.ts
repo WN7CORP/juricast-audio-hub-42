@@ -53,9 +53,9 @@ export interface SupabaseEpisode {
   tag: string | string[];
   tema: string;
   sequencia: string;
-  data_publicacao?: string;
-  comentarios?: number;
-  curtidas?: number;
+  data_publicacao?: string;  // Added as optional
+  comentarios?: number;       // Added as optional
+  curtidas?: number;          // Added as optional
 }
 
 // Global audio player context
