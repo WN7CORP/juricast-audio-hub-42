@@ -149,6 +149,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       // Only set src if it's different from current to prevent duplicate playback
       if (audioRef.current.src !== state.currentEpisode.url_audio) {
         audioRef.current.src = state.currentEpisode.url_audio;
+        audioRef.current.load(); // Explicitly load to avoid race conditions
       }
       
       audioRef.current.volume = state.isMuted ? 0 : state.volume;
@@ -193,11 +194,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
       audioRef.current.addEventListener('ended', handleEnded);
       
-      if (state.isPlaying) {
-        audioRef.current.play().catch(() => {
-          dispatch({ type: 'PAUSE' });
-        });
-      }
+      // Don't auto-play when just setting source, let components control that
       
       return () => {
         if (audioRef.current) {
@@ -213,9 +210,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (audioRef.current) {
       if (state.isPlaying) {
-        audioRef.current.play().catch(() => {
-          dispatch({ type: 'PAUSE' });
-        });
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            dispatch({ type: 'PAUSE' });
+          });
+        }
       } else {
         audioRef.current.pause();
       }

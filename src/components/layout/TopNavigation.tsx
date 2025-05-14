@@ -112,10 +112,10 @@ const TopNavigation = () => {
 const MainNavigation = ({ path }: { path: string }) => {
   const navItems = [
     { icon: Home, label: "Home", href: "/" },
-    { icon: Clock, label: "Progresso", href: "/em-progresso" },
+    { icon: Clock, label: "Novos", href: "/episodios-novos" },
+    { icon: List, label: "Progresso", href: "/em-progresso" },
     { icon: Check, label: "Concluídos", href: "/concluidos" },
-    { icon: Heart, label: "Favoritos", href: "/favoritos" },
-    { icon: List, label: "Categorias", href: "/?sort=categorias" }
+    { icon: Heart, label: "Favoritos", href: "/favoritos" }
   ];
 
   return (
@@ -128,7 +128,7 @@ const MainNavigation = ({ path }: { path: string }) => {
       >
         {navItems.map((item) => {
           const isActive = path === item.href || 
-                        (item.href === "/?sort=categorias" && path.includes("/categoria"));
+                        (item.href === "/episodios-novos" && path.includes("/episodios-novos"));
           const Icon = item.icon;
           
           return (
@@ -173,28 +173,16 @@ const CategoryNav = ({ areas }: { areas: AreaCard[] }) => {
   const location = useLocation();
   const path = location.pathname;
   
-  // Default categories plus dynamic areas
-  const categories = [
-    { name: "Todos", href: "/" },
-    { name: "Novos", href: "/episodios-novos" },
-    { name: "Em Progresso", href: "/em-progresso" },
-    { name: "Favoritos", href: "/favoritos" },
-    ...areas.map(area => ({
-      name: area.name,
-      href: `/categoria/${area.slug}`
-    }))
-  ];
-  
   return (
     <div className="overflow-x-auto nav-scrollbar">
       <div className="flex px-4 space-x-4 pb-2 min-w-max">
-        {categories.map((category) => {
-          const isActive = path === category.href;
+        {areas.map((area) => {
+          const isActive = path === `/categoria/${area.slug}`;
           
           return (
             <Link
-              key={category.name}
-              to={category.href}
+              key={area.name}
+              to={`/categoria/${area.slug}`}
               className={cn(
                 "px-3 py-1 rounded-full text-sm whitespace-nowrap transition-all duration-300",
                 isActive 
@@ -202,7 +190,7 @@ const CategoryNav = ({ areas }: { areas: AreaCard[] }) => {
                   : "bg-juricast-card text-juricast-text hover:bg-juricast-card/70"
               )}
             >
-              {category.name}
+              {area.name}
             </Link>
           );
         })}

@@ -41,71 +41,73 @@ const MiniPlayer = () => {
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 100, opacity: 0 }}
-        className="mini-player p-2 z-50 mb-16"
-      >
-        <div className="relative">
-          {/* Progress bar at the top of mini player */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-juricast-background/30">
-            <motion.div
-              className="h-full bg-juricast-accent"
-              style={{ width: `${progress}%` }}
-              animate={{ width: `${progress}%` }}
-              transition={{ ease: "linear" }}
-            />
-          </div>
-          
-          <div className="flex items-center pt-1">
-            <Link to={`/podcast/${currentEpisode.id}`} className="flex-shrink-0">
-              <motion.img
-                whileHover={{ scale: 1.05 }}
-                src={currentEpisode.imagem_miniatura}
-                alt={currentEpisode.titulo}
-                className="w-12 h-12 rounded object-cover mr-3"
+      {showMiniPlayer && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          className="fixed bottom-0 left-0 right-0 z-50 bg-juricast-card border-t border-juricast-card/30"
+        >
+          <div className="relative">
+            {/* Progress bar at the top of mini player */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-juricast-background/30">
+              <motion.div
+                className="h-full bg-juricast-accent"
+                style={{ width: `${progress}%` }}
+                animate={{ width: `${progress}%` }}
+                transition={{ ease: "linear" }}
               />
-            </Link>
-            
-            <div className="flex-grow min-w-0">
-              <Link to={`/podcast/${currentEpisode.id}`} className="block">
-                <h4 className="text-sm font-medium truncate">{currentEpisode.titulo}</h4>
-                <p className="text-xs text-juricast-muted truncate">{formatTime(currentTime)} / {formatTime(duration)}</p>
-              </Link>
             </div>
             
-            <div className="flex items-center gap-1">
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                className="p-2 rounded-full hover:bg-juricast-background/30"
-                onClick={handlePlayPause}
-                aria-label={isPlaying ? "Pause" : "Play"}
-              >
-                {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-              </motion.button>
+            <div className="flex items-center pt-1 p-3">
+              <Link to={`/podcast/${currentEpisode.id}`} className="flex-shrink-0">
+                <motion.img
+                  whileHover={{ scale: 1.05 }}
+                  src={currentEpisode.imagem_miniatura}
+                  alt={currentEpisode.titulo}
+                  className="w-12 h-12 rounded object-cover mr-3"
+                />
+              </Link>
               
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                className="p-2 rounded-full hover:bg-juricast-background/30"
-                onClick={() => skipForward(10)}
-                aria-label="Skip forward 10 seconds"
-              >
-                <SkipForward size={20} />
-              </motion.button>
+              <div className="flex-grow min-w-0">
+                <Link to={`/podcast/${currentEpisode.id}`} className="block">
+                  <h4 className="text-sm font-medium truncate">{currentEpisode.titulo}</h4>
+                  <p className="text-xs text-juricast-muted truncate">{formatTime(currentTime)} / {formatTime(duration)}</p>
+                </Link>
+              </div>
               
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                className="p-2 rounded-full hover:bg-juricast-background/30"
-                onClick={handleClosePlayer}
-                aria-label="Close player"
-              >
-                <X size={20} />
-              </motion.button>
+              <div className="flex items-center gap-1">
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2 rounded-full hover:bg-juricast-background/30"
+                  onClick={handlePlayPause}
+                  aria-label={isPlaying ? "Pause" : "Play"}
+                >
+                  {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                </motion.button>
+                
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2 rounded-full hover:bg-juricast-background/30"
+                  onClick={() => skipForward(10)}
+                  aria-label="Skip forward 10 seconds"
+                >
+                  <SkipForward size={20} />
+                </motion.button>
+                
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2 rounded-full hover:bg-juricast-background/30"
+                  onClick={handleClosePlayer}
+                  aria-label="Close player"
+                >
+                  <X size={20} />
+                </motion.button>
+              </div>
             </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 };

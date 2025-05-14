@@ -16,11 +16,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     <div className="flex min-h-screen bg-juricast-background text-juricast-text overflow-hidden">
       {!isMobile && <Sidebar />}
       
-      <main className="flex-1 flex flex-col pb-16 md:pb-0 w-full max-w-full">
+      <main className="flex-1 flex flex-col w-full max-w-full">
         <TopNavigation />
         
         <motion.div 
-          className="flex-1 p-3 md:p-6 overflow-y-auto overflow-x-hidden"
+          className="flex-1 p-3 md:p-6 overflow-y-auto overflow-x-hidden pb-20" // Add padding at the bottom for MiniPlayer
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}

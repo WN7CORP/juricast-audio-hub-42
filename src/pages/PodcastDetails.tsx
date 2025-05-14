@@ -4,11 +4,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import AudioPlayer from '@/components/audio/AudioPlayer';
 import { getEpisodeById, toggleFavorite, saveUserIP } from '@/lib/podcast-service';
-import { Heart, ArrowLeft, Share2, ListMusic } from 'lucide-react';
+import { Heart, ArrowLeft, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { useAudioPlayer } from '@/context/AudioPlayerContext';
+
 const PodcastDetails = () => {
   const {
     id
