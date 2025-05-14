@@ -1,47 +1,47 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/context/AudioPlayerContext';
 import { motion } from 'framer-motion';
-
 interface AudioPlayerProps {
   src: string;
   title: string;
   thumbnail?: string;
   episodeId?: number;
 }
-
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
   src,
   title,
   thumbnail,
   episodeId
 }) => {
-  const { 
-    state, 
-    pause, 
-    resume, 
-    setVolume, 
-    toggleMute, 
-    seekTo, 
-    skipForward, 
-    skipBackward, 
-    setPlaybackRate 
+  const {
+    state,
+    pause,
+    resume,
+    setVolume,
+    toggleMute,
+    seekTo,
+    skipForward,
+    skipBackward,
+    setPlaybackRate
   } = useAudioPlayer();
-  
-  const { isPlaying, volume, isMuted, currentTime, duration, playbackRate } = state;
-  
+  const {
+    isPlaying,
+    volume,
+    isMuted,
+    currentTime,
+    duration,
+    playbackRate
+  } = state;
   const [showPlaybackOptions, setShowPlaybackOptions] = useState(false);
   const [audioColor, setAudioColor] = useState('#E50914');
-  
   const progressRef = useRef<HTMLDivElement>(null);
 
   // Generate random audio color
   useEffect(() => {
     setAudioColor('#E50914'); // Keep with JuriCast red accent
   }, [src]);
-
   const handlePlayPause = () => {
     if (isPlaying) {
       pause();
@@ -49,7 +49,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       resume();
     }
   };
-
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (progressRef.current) {
       const rect = progressRef.current.getBoundingClientRect();
@@ -57,12 +56,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       seekTo(percent * duration);
     }
   };
-
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
   };
-
   const formatTime = (time: number) => {
     if (isNaN(time)) return '00:00';
     const minutes = Math.floor(time / 60);
@@ -72,125 +69,73 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   // Create array of bars for audio visualizer
   const audioVisualizerBars = Array(20).fill(0);
-
-  return (
-    <motion.div 
-      initial={{
-        opacity: 0,
-        y: 20
-      }} 
-      animate={{
-        opacity: 1,
-        y: 0
-      }} 
-      transition={{
-        duration: 0.5,
-        delay: 0.2
-      }} 
-      className="p-4 bg-juricast-card rounded-lg border border-juricast-card/30 px-[28px] py-6 relative overflow-hidden"
-    >
+  return <motion.div initial={{
+    opacity: 0,
+    y: 20
+  }} animate={{
+    opacity: 1,
+    y: 0
+  }} transition={{
+    duration: 0.5,
+    delay: 0.2
+  }} className="p-4 bg-juricast-card rounded-lg border border-juricast-card/30 px-[28px] py-6 relative overflow-hidden">
       {/* Dynamic Background Particles */}
       <div className="absolute inset-0 overflow-hidden opacity-20">
-        {Array.from({ length: 30 }).map((_, index) => (
-          <motion.div 
-            key={index}
-            className="absolute rounded-full" 
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: `${Math.random() * 4 + 1}px`,
-              height: `${Math.random() * 4 + 1}px`,
-              background: audioColor,
-            }}
-            animate={{
-              y: isPlaying ? [0, -30, 0] : 0,
-              opacity: isPlaying ? [0.7, 1, 0.7] : 0.7,
-              scale: isPlaying ? [1, 1.2, 1] : 1
-            }}
-            transition={{
-              duration: Math.random() * 3 + 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: Math.random() * 2
-            }}
-          />
-        ))}
+        {Array.from({
+        length: 30
+      }).map((_, index) => <motion.div key={index} className="absolute rounded-full" style={{
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        width: `${Math.random() * 4 + 1}px`,
+        height: `${Math.random() * 4 + 1}px`,
+        background: audioColor
+      }} animate={{
+        y: isPlaying ? [0, -30, 0] : 0,
+        opacity: isPlaying ? [0.7, 1, 0.7] : 0.7,
+        scale: isPlaying ? [1, 1.2, 1] : 1
+      }} transition={{
+        duration: Math.random() * 3 + 2,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: Math.random() * 2
+      }} />)}
       </div>
       
       <div className="relative z-10">
         <div className="flex flex-col items-center mb-4">
-          <motion.div 
-            className="relative w-full max-w-xs aspect-square mb-4 overflow-hidden rounded-lg" 
-            whileHover={{
-              scale: 1.02
-            }} 
-            transition={{
-              duration: 0.3
-            }}
-          >
+          <motion.div className="relative w-full max-w-xs aspect-square mb-4 overflow-hidden rounded-lg" whileHover={{
+          scale: 1.02
+        }} transition={{
+          duration: 0.3
+        }}>
             {/* Thumbnail with audio visualization overlay */}
-            <img 
-              src={thumbnail || '/placeholder.svg'} 
-              alt={title} 
-              className="w-full h-full object-cover" 
-            />
-            <motion.div 
-              className="absolute inset-0 bg-black/30 flex items-center justify-center"
-              animate={{
-                backgroundColor: isPlaying 
-                  ? ['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.3)'] 
-                  : 'rgba(0,0,0,0.3)'
-              }}
-              transition={{ 
-                duration: 2, 
-                repeat: Infinity, 
-                ease: "easeInOut" 
-              }}
-            >
+            <img src={thumbnail || '/placeholder.svg'} alt={title} className="w-full h-full object-cover" />
+            <motion.div className="absolute inset-0 bg-black/30 flex items-center justify-center" animate={{
+            backgroundColor: isPlaying ? ['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.3)'] : 'rgba(0,0,0,0.3)'
+          }} transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}>
               {/* Red Audio Visualizer */}
-              {isPlaying && (
-                <div className="absolute inset-0 flex items-center justify-center">
+              {isPlaying && <div className="absolute inset-0 flex items-center justify-center">
                   <div className="audio-visualizer-wrapper flex items-end justify-center h-24 w-48 gap-1">
-                    {audioVisualizerBars.map((_, index) => (
-                      <motion.div
-                        key={index}
-                        className="audio-viz-bar bg-juricast-accent"
-                        animate={{
-                          height: [
-                            `${20 + Math.random() * 40}px`,
-                            `${5 + Math.random() * 20}px`,
-                            `${20 + Math.random() * 40}px`
-                          ]
-                        }}
-                        transition={{
-                          duration: 0.8 + Math.random() * 0.5,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                          repeatType: "reverse"
-                        }}
-                        style={{
-                          width: "4px",
-                          borderRadius: "2px"
-                        }}
-                      />
-                    ))}
+                    {audioVisualizerBars.map((_, index) => <motion.div key={index} className="audio-viz-bar bg-juricast-accent" animate={{
+                  height: [`${20 + Math.random() * 40}px`, `${5 + Math.random() * 20}px`, `${20 + Math.random() * 40}px`]
+                }} transition={{
+                  duration: 0.8 + Math.random() * 0.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  repeatType: "reverse"
+                }} style={{
+                  width: "4px",
+                  borderRadius: "2px"
+                }} />)}
                   </div>
-                </div>
-              )}
+                </div>}
               
               {/* Play/Pause Button */}
-              <motion.button 
-                onClick={handlePlayPause} 
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 flex items-center justify-center rounded-full bg-juricast-accent/90 text-white hover:bg-juricast-accent transition-colors z-10" 
-                whileHover={{
-                  scale: 1.1
-                }} 
-                whileTap={{
-                  scale: 0.9
-                }}
-              >
-                {isPlaying ? <Pause size={28} /> : <Play size={28} className="ml-1" />}
-              </motion.button>
+              
             </motion.div>
           </motion.div>
         </div>
@@ -200,12 +145,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         </div>
 
         <div className="w-full h-2 bg-juricast-background rounded-full overflow-hidden mb-2 cursor-pointer" onClick={handleProgressClick} ref={progressRef}>
-          <motion.div 
-            className="h-full bg-juricast-accent" 
-            style={{ width: `${currentTime / duration * 100}%` }}
-            animate={{ width: `${currentTime / duration * 100}%` }}
-            transition={{ ease: "linear" }}
-          />
+          <motion.div className="h-full bg-juricast-accent" style={{
+          width: `${currentTime / duration * 100}%`
+        }} animate={{
+          width: `${currentTime / duration * 100}%`
+        }} transition={{
+          ease: "linear"
+        }} />
         </div>
 
         <div className="flex justify-between text-juricast-muted text-sm mb-4">
@@ -214,40 +160,25 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         </div>
 
         <div className="flex justify-center items-center gap-4 mb-4">
-          <motion.button 
-            onClick={() => skipBackward(10)} 
-            className="player-button w-10 h-10 flex items-center justify-center rounded-full hover:bg-juricast-background/30" 
-            whileHover={{
-              scale: 1.1
-            }} 
-            whileTap={{
-              scale: 0.9
-            }}
-          >
+          <motion.button onClick={() => skipBackward(10)} className="player-button w-10 h-10 flex items-center justify-center rounded-full hover:bg-juricast-background/30" whileHover={{
+          scale: 1.1
+        }} whileTap={{
+          scale: 0.9
+        }}>
             <SkipBack size={20} />
           </motion.button>
-          <motion.button 
-            onClick={handlePlayPause} 
-            className="player-button w-14 h-14 flex items-center justify-center rounded-full bg-juricast-accent text-white hover:bg-juricast-accent/90" 
-            whileHover={{
-              scale: 1.05
-            }} 
-            whileTap={{
-              scale: 0.95
-            }}
-          >
+          <motion.button onClick={handlePlayPause} className="player-button w-14 h-14 flex items-center justify-center rounded-full bg-juricast-accent text-white hover:bg-juricast-accent/90" whileHover={{
+          scale: 1.05
+        }} whileTap={{
+          scale: 0.95
+        }}>
             {isPlaying ? <Pause size={24} /> : <Play size={24} className="ml-1" />}
           </motion.button>
-          <motion.button 
-            onClick={() => skipForward(10)} 
-            className="player-button w-10 h-10 flex items-center justify-center rounded-full hover:bg-juricast-background/30" 
-            whileHover={{
-              scale: 1.1
-            }} 
-            whileTap={{
-              scale: 0.9
-            }}
-          >
+          <motion.button onClick={() => skipForward(10)} className="player-button w-10 h-10 flex items-center justify-center rounded-full hover:bg-juricast-background/30" whileHover={{
+          scale: 1.1
+        }} whileTap={{
+          scale: 0.9
+        }}>
             <SkipForward size={20} />
           </motion.button>
         </div>
@@ -256,58 +187,33 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           <button onClick={toggleMute} className="text-juricast-muted hover:text-juricast-text">
             {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
-          <input 
-            type="range" 
-            min="0" 
-            max="1" 
-            step="0.01" 
-            value={isMuted ? 0 : volume} 
-            onChange={handleVolumeChange} 
-            className="w-full h-1 bg-juricast-background rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-juricast-accent" 
-          />
+          <input type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : volume} onChange={handleVolumeChange} className="w-full h-1 bg-juricast-background rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-juricast-accent" />
         </div>
 
         {/* Playback speed control */}
         <div className="flex justify-center mt-4">
           <div className="relative">
-            <motion.button
-              onClick={() => setShowPlaybackOptions(!showPlaybackOptions)}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="px-3 py-1 text-sm bg-juricast-background/30 rounded-full hover:bg-juricast-background/50"
-            >
+            <motion.button onClick={() => setShowPlaybackOptions(!showPlaybackOptions)} whileHover={{
+            scale: 1.1
+          }} whileTap={{
+            scale: 0.9
+          }} className="px-3 py-1 text-sm bg-juricast-background/30 rounded-full hover:bg-juricast-background/50">
               {playbackRate}x
             </motion.button>
             
-            {showPlaybackOptions && (
-              <div
-                className="absolute bottom-full left-0 mb-2 bg-juricast-card border border-juricast-card/30 rounded-lg p-2 shadow-lg z-20"
-              >
-                {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
-                  <motion.button
-                    key={rate}
-                    onClick={() => {
-                      setPlaybackRate(rate);
-                      setShowPlaybackOptions(false);
-                    }}
-                    className={cn(
-                      "block w-full text-left px-3 py-1 rounded-md text-sm",
-                      playbackRate === rate 
-                        ? "bg-juricast-accent text-white" 
-                        : "hover:bg-juricast-background/30"
-                    )}
-                    whileHover={{ x: 3 }}
-                  >
+            {showPlaybackOptions && <div className="absolute bottom-full left-0 mb-2 bg-juricast-card border border-juricast-card/30 rounded-lg p-2 shadow-lg z-20">
+                {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => <motion.button key={rate} onClick={() => {
+              setPlaybackRate(rate);
+              setShowPlaybackOptions(false);
+            }} className={cn("block w-full text-left px-3 py-1 rounded-md text-sm", playbackRate === rate ? "bg-juricast-accent text-white" : "hover:bg-juricast-background/30")} whileHover={{
+              x: 3
+            }}>
                     {rate}x
-                  </motion.button>
-                ))}
-              </div>
-            )}
+                  </motion.button>)}
+              </div>}
           </div>
         </div>
       </div>
-    </motion.div>
-  );
+    </motion.div>;
 };
-
 export default AudioPlayer;
