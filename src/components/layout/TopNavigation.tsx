@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Home, Heart, Clock, List, Check } from 'lucide-react';
+import { Search, Home, Clock, CheckCircle, ListTodo, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAllAreas } from '@/lib/podcast-service';
@@ -99,7 +99,7 @@ const TopNavigation = () => {
           </div>
         </div>
         
-        {/* Main Navigation */}
+        {/* Main Navigation with updated icons */}
         <MainNavigation path={path} />
         
         {/* Categories */}
@@ -113,8 +113,8 @@ const MainNavigation = ({ path }: { path: string }) => {
   const navItems = [
     { icon: Home, label: "Home", href: "/" },
     { icon: Clock, label: "Novos", href: "/episodios-novos" },
-    { icon: List, label: "Progresso", href: "/em-progresso" },
-    { icon: Check, label: "Concluídos", href: "/concluidos" },
+    { icon: ListTodo, label: "Progresso", href: "/em-progresso" },
+    { icon: CheckCircle, label: "Concluídos", href: "/concluidos" },
     { icon: Heart, label: "Favoritos", href: "/favoritos" }
   ];
 

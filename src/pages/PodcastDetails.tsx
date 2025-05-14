@@ -11,20 +11,11 @@ import { motion } from 'framer-motion';
 import { useAudioPlayer } from '@/context/AudioPlayerContext';
 
 const PodcastDetails = () => {
-  const {
-    id
-  } = useParams<{
-    id: string;
-  }>();
+  const { id } = useParams<{ id: string; }>();
   const queryClient = useQueryClient();
-  const {
-    play
-  } = useAudioPlayer();
+  const { state, play } = useAudioPlayer();
   const episodeId = parseInt(id || '0');
-  const {
-    data: episode,
-    isLoading
-  } = useQuery({
+  const { data: episode, isLoading } = useQuery({
     queryKey: ['episode', episodeId],
     queryFn: () => getEpisodeById(episodeId),
     enabled: !!episodeId
@@ -35,35 +26,34 @@ const PodcastDetails = () => {
   useEffect(() => {
     saveUserIP();
   }, []);
+
   useEffect(() => {
     if (episode) {
       setIsFavorite(episode.favorito || false);
     }
   }, [episode]);
 
-  // Play the episode when it loads
+  // Play the episode only if it's not already playing
   useEffect(() => {
-    if (episode) {
+    if (episode && state.currentEpisode?.id !== episode.id) {
       play(episode);
     }
-  }, [episode, play]);
+  }, [episode, play, state.currentEpisode?.id]);
+
   const handleToggleFavorite = () => {
     if (!episode) return;
     const newStatus = toggleFavorite(episode.id);
     setIsFavorite(newStatus);
 
     // Invalidate queries to refresh data
-    queryClient.invalidateQueries({
-      queryKey: ['favoriteEpisodes']
-    });
-    queryClient.invalidateQueries({
-      queryKey: ['episode', episodeId]
-    });
+    queryClient.invalidateQueries({ queryKey: ['favoriteEpisodes'] });
+    queryClient.invalidateQueries({ queryKey: ['episode', episodeId] });
     toast({
       title: newStatus ? "Adicionado aos favoritos" : "Removido dos favoritos",
       description: newStatus ? "Este episódio foi adicionado à sua lista de favoritos." : "Este episódio foi removido da sua lista de favoritos."
     });
   };
+
   const handleShareEpisode = () => {
     if (!episode) return;
 
@@ -86,12 +76,14 @@ const PodcastDetails = () => {
       copyToClipboard();
     }
   };
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(window.location.href).then(() => toast({
       title: "Link copiado",
       description: "O link do episódio foi copiado para a área de transferência."
     })).catch(err => console.error("Failed to copy:", err));
   };
+
   if (isLoading) {
     return <MainLayout>
       <div className="animate-pulse space-y-8">
@@ -103,6 +95,7 @@ const PodcastDetails = () => {
       </div>
     </MainLayout>;
   }
+
   if (!episode) {
     return <MainLayout>
       <div className="flex flex-col items-center justify-center h-[60vh]">
@@ -113,36 +106,31 @@ const PodcastDetails = () => {
       </div>
     </MainLayout>;
   }
+
   const fadeIn = {
-    hidden: {
-      opacity: 0,
-      y: 20
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5
-      }
-    }
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
-  return <MainLayout>
+
+  return (
+    <MainLayout>
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center">
-            <motion.div whileHover={{
-            scale: 1.1
-          }} whileTap={{
-            scale: 0.9
-          }}>
-              <Link to="/" className="mr-4 p-2 bg-juricast-card hover:bg-juricast-accent hover:text-white rounded-full transition-all">
-                <ArrowLeft size={20} />
+            <motion.div 
+              whileHover={{ scale: 1.1 }} 
+              whileTap={{ scale: 0.9 }}
+            >
+              <Link 
+                to="/" 
+                className="mr-4 p-4 bg-juricast-card hover:bg-juricast-accent hover:text-white rounded-full transition-all flex items-center justify-center"
+                aria-label="Voltar"
+              >
+                <ArrowLeft size={24} />
               </Link>
             </motion.div>
             <h1 className="text-2xl font-bold truncate">{episode.titulo}</h1>
           </div>
-          
-          
         </div>
 
         <div className="grid grid-cols-1 gap-6">
@@ -230,6 +218,8 @@ const PodcastDetails = () => {
           </motion.div>
         </div>
       </motion.div>
-    </MainLayout>;
+    </MainLayout>
+  );
 };
+
 export default PodcastDetails;
