@@ -15,6 +15,8 @@ import Completed from "./pages/Completed";
 import Category from "./pages/Category";
 import ThemeDetails from "./pages/ThemeDetails";
 import NotFound from "./pages/NotFound";
+import SearchResults from "./pages/SearchResults";
+import NewEpisodes from "./pages/NewEpisodes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +41,8 @@ const AppRoutes = () => {
           <Route path="/concluidos" element={<Completed />} />
           <Route path="/categoria/:category" element={<Category />} />
           <Route path="/categoria/:area/tema/:theme" element={<ThemeDetails />} />
+          <Route path="/episodios-novos" element={<NewEpisodes />} />
+          <Route path="/busca" element={<SearchResults />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>

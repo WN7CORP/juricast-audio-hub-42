@@ -21,7 +21,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 }) => {
   const { 
     state, 
-    play, 
     pause, 
     resume, 
     setVolume, 
@@ -34,8 +33,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   
   const { isPlaying, volume, isMuted, currentTime, duration, playbackRate } = state;
   
-  const [visualizerData, setVisualizerData] = useState<number[]>([]);
-  const [particles, setParticles] = useState<{ x: number, y: number, size: number, speed: number }[]>([]);
   const [showPlaybackOptions, setShowPlaybackOptions] = useState(false);
   const [showSleepTimer, setShowSleepTimer] = useState(false);
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState(30);
@@ -43,70 +40,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [audioColor, setAudioColor] = useState('#E50914');
   
   const progressRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
   const sleepTimerRef = useRef<number | null>(null);
 
-  // Generate random audio visualization data
+  // Generate random audio color
   useEffect(() => {
-    // Generate initial visualizer data
-    const data = Array(50).fill(0).map(() => Math.random() * 100);
-    setVisualizerData(data);
-    
-    // Generate particles
-    const newParticles = Array(30).fill(0).map(() => ({
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 4 + 1,
-      speed: Math.random() * 0.5 + 0.1
-    }));
-    setParticles(newParticles);
-    
-    // Set random color from a curated list of colors
     const colors = ['#E50914', '#1DB954', '#4C7BF4', '#F28C28', '#9B59B6'];
     setAudioColor(colors[Math.floor(Math.random() * colors.length)]);
   }, [src]);
-
-  useEffect(() => {
-    // Animate particles
-    const animateParticles = () => {
-      if (!isPlaying) return;
-      
-      setParticles(prevParticles => 
-        prevParticles.map(particle => ({
-          ...particle,
-          y: particle.y - particle.speed,
-          x: particle.x + (Math.random() - 0.5) * 0.5,
-          // Reset particles that go off-screen
-          ...(particle.y < 0 ? { y: 100 } : {})
-        }))
-      );
-    };
-    
-    const particleInterval = setInterval(animateParticles, 50);
-    return () => clearInterval(particleInterval);
-  }, [isPlaying]);
-
-  // Handle audio visualization
-  useEffect(() => {
-    // Update visualization
-    const updateVisualization = () => {
-      if (!isPlaying) return;
-      
-      // Update visualizer data with randomized values that simulate audio reaction
-      setVisualizerData(prev => 
-        prev.map(v => {
-          // Create a more dynamic effect by having some bars move more than others
-          const changeAmount = Math.random() * 20 - 10;
-          return Math.max(5, Math.min(100, v + changeAmount));
-        })
-      );
-    };
-    
-    const visualizationInterval = setInterval(updateVisualization, 100);
-    return () => clearInterval(visualizationInterval);
-  }, [isPlaying]);
 
   // Manage sleep timer
   useEffect(() => {
@@ -170,6 +110,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     setShowSleepTimer(false);
   };
 
+  // Create array of bars for audio visualizer
+  const audioVisualizerBars = Array(20).fill(0);
+
   return (
     <motion.div 
       initial={{
@@ -186,27 +129,29 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       }} 
       className="p-4 bg-juricast-card rounded-lg border border-juricast-card/30 px-[28px] py-6 relative overflow-hidden"
     >
-      {/* Animated Background */}
+      {/* Dynamic Background Particles */}
       <div className="absolute inset-0 overflow-hidden opacity-20">
-        {particles.map((particle, index) => (
+        {Array.from({ length: 30 }).map((_, index) => (
           <motion.div 
             key={index}
             className="absolute rounded-full" 
             style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              width: `${particle.size}px`,
-              height: `${particle.size}px`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: `${Math.random() * 4 + 1}px`,
+              height: `${Math.random() * 4 + 1}px`,
               background: audioColor,
             }}
             animate={{
-              scale: isPlaying ? [1, 1.2, 1] : 1,
-              opacity: isPlaying ? [0.7, 1, 0.7] : 0.7
+              y: isPlaying ? [0, -30, 0] : 0,
+              opacity: isPlaying ? [0.7, 1, 0.7] : 0.7,
+              scale: isPlaying ? [1, 1.2, 1] : 1
             }}
             transition={{
-              duration: 2,
+              duration: Math.random() * 3 + 2,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "easeInOut",
+              delay: Math.random() * 2
             }}
           />
         ))}
@@ -223,7 +168,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
               duration: 0.3
             }}
           >
-            {/* Thumbnail with pulsating overlay */}
+            {/* Thumbnail with advanced audio visualization overlay */}
             <img 
               src={thumbnail || '/placeholder.svg'} 
               alt={title} 
@@ -242,67 +187,61 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 ease: "easeInOut" 
               }}
             >
-              {/* Advanced Audio Visualization Circle */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative w-32 h-32 flex items-center justify-center">
-                  <AnimatePresence>
-                    {isPlaying && (
-                      <motion.div 
-                        className="absolute inset-0"
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }}
-                      >
-                        <div className="w-full h-full flex items-center justify-center">
-                          {/* Circular Audio Visualizer */}
-                          {visualizerData.slice(0, 30).map((value, i) => {
-                            const angle = (i / 30) * Math.PI * 2;
-                            const height = (value / 100) * 30 + 5;
-                            const x = Math.cos(angle) * 40;
-                            const y = Math.sin(angle) * 40;
-                            return (
-                              <motion.div
-                                key={i}
-                                className="absolute bg-white rounded-full"
-                                style={{
-                                  height: `${height}px`,
-                                  width: '2px',
-                                  left: 'calc(50% - 1px)',
-                                  top: 'calc(50% - 1px)',
-                                  transformOrigin: 'center',
-                                  transform: `rotate(${angle}rad) translateY(-40px)`
-                                }}
-                                animate={{
-                                  height: isPlaying ? [`${height}px`, `${height * 0.5}px`, `${height}px`] : `${height}px`
-                                }}
-                                transition={{
-                                  duration: 0.8,
-                                  repeat: Infinity,
-                                  delay: i * 0.02,
-                                  ease: "easeInOut"
-                                }}
-                              />
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-              
-              <motion.button 
-                onClick={handlePlayPause} 
-                className="w-16 h-16 flex items-center justify-center rounded-full bg-juricast-accent/90 text-white hover:bg-juricast-accent transition-colors z-10" 
-                whileHover={{
-                  scale: 1.1
-                }} 
-                whileTap={{
-                  scale: 0.9
-                }}
-              >
-                {isPlaying ? <Pause size={28} /> : <Play size={28} className="ml-1" />}
-              </motion.button>
+              {/* New Circular Audio Visualizer */}
+              <AnimatePresence>
+                {isPlaying && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="audio-visualizer-circular"
+                  >
+                    {Array.from({ length: 30 }).map((_, index) => {
+                      const angle = (index / 30) * Math.PI * 2;
+                      const height = 20 + Math.random() * 30;
+                      
+                      return (
+                        <motion.div
+                          key={index}
+                          className="circular-bar"
+                          style={{
+                            height: `${height}px`,
+                            left: '50%',
+                            bottom: '50%',
+                            transform: `rotate(${angle}rad) translateX(-50%)`,
+                            '--bar-height': `${height}px`
+                          } as any}
+                          animate={{
+                            height: isPlaying 
+                              ? [`${height}px`, `${height * 0.5}px`, `${height}px`] 
+                              : `${height}px`
+                          }}
+                          transition={{
+                            duration: 1 + Math.random(),
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                            delay: index * 0.03
+                          }}
+                        />
+                      );
+                    })}
+                    
+                    {/* Play/Pause Button in Center */}
+                    <motion.button 
+                      onClick={handlePlayPause} 
+                      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 flex items-center justify-center rounded-full bg-juricast-accent/90 text-white hover:bg-juricast-accent transition-colors z-10" 
+                      whileHover={{
+                        scale: 1.1
+                      }} 
+                      whileTap={{
+                        scale: 0.9
+                      }}
+                    >
+                      {isPlaying ? <Pause size={28} /> : <Play size={28} className="ml-1" />}
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </motion.div>
         </div>
@@ -325,25 +264,20 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           <span>{formatTime(duration)}</span>
         </div>
 
-        {/* Enhanced waveform visualization */}
-        <div className="waveform mb-4 flex h-16 items-end justify-center">
-          {visualizerData.map((value, index) => (
+        {/* Enhanced horizontal waveform visualization */}
+        <div className="audio-visualizer mb-6">
+          {audioVisualizerBars.map((_, index) => (
             <motion.div 
               key={index} 
-              className="waveform-bar mx-[1px] w-1 rounded-full"
-              style={{
-                background: `${audioColor}`,
-              }}
-              initial={{
-                height: 2
-              }} 
+              className="audio-bar"
               animate={{
-                height: isPlaying ? `${value * 0.3}%` : `${Math.min(20, value * 0.15)}%`,
-                opacity: currentTime / duration > index / visualizerData.length ? 1 : 0.5
-              }} 
+                opacity: isPlaying ? [0.7, 1, 0.7] : 0.5
+              }}
               transition={{
-                duration: isPlaying ? 0.5 : 0.2,
-                delay: isPlaying ? index * 0.02 : 0
+                duration: 1 + Math.random(),
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: index * 0.05
               }}
             />
           ))}

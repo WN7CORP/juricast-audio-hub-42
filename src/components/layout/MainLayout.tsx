@@ -2,7 +2,6 @@
 import React from 'react';
 import Sidebar from './Sidebar';
 import TopNavigation from './TopNavigation';
-import BottomNavigation from './BottomNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -31,8 +30,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             {children}
           </AnimatePresence>
         </motion.div>
-        
-        {isMobile && <BottomNavigation />}
       </main>
     </div>
   );

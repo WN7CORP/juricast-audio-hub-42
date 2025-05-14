@@ -32,7 +32,8 @@ type AudioPlayerAction =
   | { type: 'HIDE_MINI_PLAYER' }
   | { type: 'ADD_TO_QUEUE', payload: PodcastEpisode }
   | { type: 'REMOVE_FROM_QUEUE', payload: number }
-  | { type: 'CLEAR_QUEUE' };
+  | { type: 'CLEAR_QUEUE' }
+  | { type: 'STOP' };
 
 // Reducer function to handle state changes
 function audioPlayerReducer(state: AudioPlayerState, action: AudioPlayerAction): AudioPlayerState {
@@ -53,6 +54,10 @@ function audioPlayerReducer(state: AudioPlayerState, action: AudioPlayerAction):
       return {
         ...state,
         isPlaying: true,
+      };
+    case 'STOP':
+      return {
+        ...initialState
       };
     case 'SET_VOLUME':
       return {
@@ -120,26 +125,32 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const queryClient = useQueryClient();
   const progressTrackingInterval = useRef<number | null>(null);
 
-  // Initialize audio element
+  // Initialize audio element only once
   useEffect(() => {
-    audioRef.current = new Audio();
-    
-    // Clean up on unmount
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-      }
-      if (progressTrackingInterval.current) {
-        window.clearInterval(progressTrackingInterval.current);
-      }
-    };
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      
+      // Clean up on unmount
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = '';
+        }
+        if (progressTrackingInterval.current) {
+          window.clearInterval(progressTrackingInterval.current);
+        }
+      };
+    }
   }, []);
 
   // Handle audio source changes
   useEffect(() => {
     if (state.currentEpisode && audioRef.current) {
-      audioRef.current.src = state.currentEpisode.url_audio;
+      // Only set src if it's different from current to prevent duplicate playback
+      if (audioRef.current.src !== state.currentEpisode.url_audio) {
+        audioRef.current.src = state.currentEpisode.url_audio;
+      }
+      
       audioRef.current.volume = state.isMuted ? 0 : state.volume;
       audioRef.current.playbackRate = state.playbackRate;
       
@@ -325,8 +336,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       audioRef.current.pause();
       audioRef.current.src = '';
     }
-    dispatch({ type: 'PAUSE' });
-    dispatch({ type: 'PLAY', payload: {...initialState.currentEpisode} as PodcastEpisode });
+    dispatch({ type: 'STOP' });
   };
 
   const value: AudioPlayerContextType = {

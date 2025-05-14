@@ -27,6 +27,18 @@ const MiniPlayer = () => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      pause();
+    } else {
+      resume();
+    }
+  };
+
+  const handleClosePlayer = () => {
+    closeMiniPlayer();
+  };
+
   return (
     <AnimatePresence>
       <motion.div
@@ -67,7 +79,8 @@ const MiniPlayer = () => {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 className="p-2 rounded-full hover:bg-juricast-background/30"
-                onClick={isPlaying ? pause : resume}
+                onClick={handlePlayPause}
+                aria-label={isPlaying ? "Pause" : "Play"}
               >
                 {isPlaying ? <Pause size={20} /> : <Play size={20} />}
               </motion.button>
@@ -76,6 +89,7 @@ const MiniPlayer = () => {
                 whileTap={{ scale: 0.9 }}
                 className="p-2 rounded-full hover:bg-juricast-background/30"
                 onClick={() => skipForward(10)}
+                aria-label="Skip forward 10 seconds"
               >
                 <SkipForward size={20} />
               </motion.button>
@@ -83,7 +97,8 @@ const MiniPlayer = () => {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 className="p-2 rounded-full hover:bg-juricast-background/30"
-                onClick={closeMiniPlayer}
+                onClick={handleClosePlayer}
+                aria-label="Close player"
               >
                 <X size={20} />
               </motion.button>

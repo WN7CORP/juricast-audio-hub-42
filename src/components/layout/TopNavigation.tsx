@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, Home, Heart, Clock, List, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { getAllAreas } from '@/lib/podcast-service';
@@ -9,6 +9,10 @@ import { AreaCard } from '@/lib/types';
 
 const TopNavigation = () => {
   const [areas, setAreas] = useState<AreaCard[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+  const location = useLocation();
+  const path = location.pathname;
   
   useEffect(() => {
     const fetchAreas = async () => {
@@ -18,6 +22,24 @@ const TopNavigation = () => {
     
     fetchAreas();
   }, []);
+
+  const toggleSearch = () => {
+    setIsSearchActive(!isSearchActive);
+    if (isSearchActive) {
+      setSearchQuery('');
+    }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/busca?q=${encodeURIComponent(searchQuery)}`;
+    }
+  };
 
   return (
     <div className="sticky top-0 z-40 bg-gradient-to-b from-juricast-background to-juricast-background/80 backdrop-blur-sm py-2">
@@ -35,6 +57,33 @@ const TopNavigation = () => {
           </Link>
           
           <div className="flex items-center gap-4">
+            <AnimatePresence>
+              {isSearchActive && (
+                <motion.form
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: "200px", opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  className="relative"
+                  onSubmit={handleSearchSubmit}
+                >
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    className="w-full py-1 px-3 pr-8 rounded-full bg-juricast-card border border-juricast-card/50 text-sm focus:outline-none focus:ring-1 focus:ring-juricast-accent"
+                    placeholder="Buscar podcasts..."
+                    autoFocus
+                  />
+                  <button 
+                    type="submit" 
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  >
+                    <Search size={16} className="text-juricast-accent" />
+                  </button>
+                </motion.form>
+              )}
+            </AnimatePresence>
+            
             <motion.button
               className="p-2 rounded-full hover:bg-juricast-card transition-colors"
               whileHover={{ scale: 1.1 }}
@@ -42,14 +91,80 @@ const TopNavigation = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
+              onClick={toggleSearch}
+              aria-label="Search"
             >
               <Search size={20} />
             </motion.button>
           </div>
         </div>
         
+        {/* Main Navigation */}
+        <MainNavigation path={path} />
+        
+        {/* Categories */}
         <CategoryNav areas={areas} />
       </div>
+    </div>
+  );
+};
+
+const MainNavigation = ({ path }: { path: string }) => {
+  const navItems = [
+    { icon: Home, label: "Home", href: "/" },
+    { icon: Clock, label: "Progresso", href: "/em-progresso" },
+    { icon: Check, label: "Concluídos", href: "/concluidos" },
+    { icon: Heart, label: "Favoritos", href: "/favoritos" },
+    { icon: List, label: "Categorias", href: "/?sort=categorias" }
+  ];
+
+  return (
+    <div className="flex justify-center mb-2">
+      <motion.div 
+        className="glassmorphism py-2 px-3 rounded-full shadow-md flex justify-around items-center"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        {navItems.map((item) => {
+          const isActive = path === item.href || 
+                        (item.href === "/?sort=categorias" && path.includes("/categoria"));
+          const Icon = item.icon;
+          
+          return (
+            <Link
+              key={item.label}
+              to={item.href}
+              className="flex flex-col items-center relative px-3"
+            >
+              <motion.div
+                className={cn(
+                  "p-2 rounded-full transition-all",
+                  isActive 
+                    ? "bg-juricast-accent text-white" 
+                    : "text-white/70 hover:text-white"
+                )}
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Icon size={20} />
+                {isActive && (
+                  <motion.div 
+                    className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full"
+                    layoutId="navIndicator"
+                  />
+                )}
+              </motion.div>
+              <span className={cn(
+                "text-xs",
+                isActive ? "text-white" : "text-white/70"
+              )}>
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </motion.div>
     </div>
   );
 };
@@ -61,6 +176,7 @@ const CategoryNav = ({ areas }: { areas: AreaCard[] }) => {
   // Default categories plus dynamic areas
   const categories = [
     { name: "Todos", href: "/" },
+    { name: "Novos", href: "/episodios-novos" },
     { name: "Em Progresso", href: "/em-progresso" },
     { name: "Favoritos", href: "/favoritos" },
     ...areas.map(area => ({
