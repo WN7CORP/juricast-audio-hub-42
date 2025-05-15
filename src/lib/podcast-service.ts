@@ -1,4 +1,6 @@
 
+// Fix the formatEpisodes function at the bottom of the file to handle proper types
+
 import { supabase } from "@/integrations/supabase/client";
 import { PodcastEpisode, UserProgress, UserFavorite, AreaCard, ThemeCard, SupabaseEpisode } from "./types";
 

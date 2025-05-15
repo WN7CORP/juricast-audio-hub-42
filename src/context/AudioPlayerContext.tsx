@@ -128,40 +128,33 @@ function audioPlayerReducer(state: AudioPlayerState, action: AudioPlayerAction):
 // Create the context
 const AudioPlayerContext = createContext<AudioPlayerContextType | undefined>(undefined);
 
+// Create a single global audio element
+let globalAudioElement: HTMLAudioElement | null = null;
+
 // Provider component
 export function AudioPlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(audioPlayerReducer, initialState);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const queryClient = useQueryClient();
   const progressTrackingInterval = useRef<number | null>(null);
-  const audioElCreated = useRef<boolean>(false);
 
-  // Initialize audio element only once
+  // Initialize audio element only once in the app lifecycle
   useEffect(() => {
-    if (!audioElCreated.current) {
-      if (audioRef.current) {
-        // Clean up existing audio element to prevent duplicates
-        audioRef.current.pause();
-        audioRef.current.src = '';
-        audioRef.current = null;
-      }
-      
-      audioRef.current = new Audio();
-      audioElCreated.current = true;
-      
-      // Clean up on unmount
-      return () => {
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.src = '';
-          audioRef.current = null;
-        }
-        if (progressTrackingInterval.current) {
-          window.clearInterval(progressTrackingInterval.current);
-        }
-        audioElCreated.current = false;
-      };
+    // Create the audio element only if it doesn't exist
+    if (!globalAudioElement) {
+      globalAudioElement = new Audio();
+      console.log('Creating new global audio element');
     }
+    
+    // Assign the global element to our ref
+    audioRef.current = globalAudioElement;
+    
+    // Clean up on unmount - but don't destroy the global element
+    return () => {
+      if (progressTrackingInterval.current) {
+        window.clearInterval(progressTrackingInterval.current);
+      }
+    };
   }, []);
 
   // Fetch related episodes to queue when current episode changes
@@ -260,7 +253,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       if (state.isPlaying) {
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
-          playPromise.catch(() => {
+          playPromise.catch((error) => {
+            console.error('Error playing audio:', error);
             dispatch({ type: 'PAUSE' });
           });
         }
