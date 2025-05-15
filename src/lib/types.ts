@@ -1,3 +1,4 @@
+
 export interface PodcastEpisode {
   id: number;
   titulo: string;
@@ -12,12 +13,34 @@ export interface PodcastEpisode {
   favorito?: boolean;
   comentarios?: number;
   curtidas?: number;
+  progresso?: number;
+}
+
+export interface UserProgress {
+  episodeId: number;
+  progress: number;
+  lastPosition: number;
+}
+
+export interface UserFavorite {
+  episodeId: number;
+  isFavorite: boolean;
 }
 
 export interface AreaCard {
   id: number;
   name: string;
   slug: string;
+  image?: string;
+  episodeCount?: number;
+}
+
+export interface ThemeCard {
+  name: string;
+  slug: string;
+  episodeCount: number;
+  area: string;
+  image: string;
 }
 
 export interface AudioPlayerState {

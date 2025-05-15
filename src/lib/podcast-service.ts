@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PodcastEpisode, UserProgress, UserFavorite, AreaCard, ThemeCard, SupabaseEpisode } from "./types";
 
@@ -36,16 +37,26 @@ export async function getAllEpisodes(): Promise<PodcastEpisode[]> {
       throw error;
     }
 
-    return formatEpisodes(data || []);
+    return formatEpisodes(ensureTagsAreArrays(data || []));
   } catch (error) {
     console.error("Error in getAllEpisodes:", error);
     return [];
   }
 }
 
+// Helper function to ensure tags are arrays
+function ensureTagsAreArrays(episodes: any[]): SupabaseEpisode[] {
+  return episodes.map(episode => ({
+    ...episode,
+    tag: Array.isArray(episode.tag) ? episode.tag : episode.tag ? [episode.tag] : []
+  }));
+}
+
 // Get episodes by area (category)
 export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]> {
   try {
+    if (!area) return [];
+    
     // Format the area string to match how it might be stored in the database
     // First letter capitalized, spaces restored from dashes
     const formattedArea = area
@@ -67,7 +78,7 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
     }
 
     console.log(`Found ${data?.length || 0} episodes for area ${formattedArea}`);
-    return formatEpisodes(data || []);
+    return formatEpisodes(ensureTagsAreArrays(data || []));
   } catch (error) {
     console.error(`Error in getEpisodesByArea for ${area}:`, error);
     return [];
@@ -103,7 +114,7 @@ export async function getEpisodesByTheme(theme: string, area: string): Promise<P
     }
 
     console.log(`Found ${data?.length || 0} episodes for theme ${formattedTheme}`);
-    return formatEpisodes(data || []);
+    return formatEpisodes(ensureTagsAreArrays(data || []));
   } catch (error) {
     console.error(`Error in getEpisodesByTheme for ${theme}:`, error);
     return [];
@@ -127,7 +138,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
     if (!data) return null;
     
     // Format the episode data
-    return {
+    const episode = {
       ...data,
       tag: Array.isArray(data.tag) ? data.tag : data.tag ? [data.tag] : [],
       progresso: getUserProgress(data.id)?.progress || 0,
@@ -136,6 +147,8 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
       curtidas: data.curtidas || 0,
       data_publicacao: data.data_publicacao || new Date().toLocaleDateString('pt-BR'),
     };
+    
+    return episode;
   } catch (error) {
     console.error(`Error in getEpisodeById for ${id}:`, error);
     return null;
@@ -165,7 +178,8 @@ export async function getAllAreas(): Promise<AreaCard[]> {
     });
     
     // Convert to array of area cards
-    const areas: AreaCard[] = Array.from(areasMap.entries()).map(([name, count]) => ({
+    const areas: AreaCard[] = Array.from(areasMap.entries()).map(([name, count], index) => ({
+      id: index + 1, // Generate ID based on index
       name,
       episodeCount: count,
       slug: name.toLowerCase().replace(/\s+/g, '-'),

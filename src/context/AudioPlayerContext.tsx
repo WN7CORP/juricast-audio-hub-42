@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
 import { AudioPlayerContextType, AudioPlayerState, PodcastEpisode } from '@/lib/types';
-import { saveEpisodeProgress } from '@/lib/podcast-service';
+import { saveEpisodeProgress, getEpisodesByArea } from '@/lib/podcast-service';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 
@@ -32,6 +32,7 @@ type AudioPlayerAction =
   | { type: 'HIDE_MINI_PLAYER' }
   | { type: 'ADD_TO_QUEUE', payload: PodcastEpisode }
   | { type: 'REMOVE_FROM_QUEUE', payload: number }
+  | { type: 'SET_QUEUE', payload: PodcastEpisode[] }
   | { type: 'CLEAR_QUEUE' }
   | { type: 'STOP' };
 
@@ -96,9 +97,18 @@ function audioPlayerReducer(state: AudioPlayerState, action: AudioPlayerAction):
         showMiniPlayer: false,
       };
     case 'ADD_TO_QUEUE':
+      // Prevent duplicates
+      if (state.queue.some(item => item.id === action.payload.id)) {
+        return state;
+      }
       return {
         ...state,
         queue: [...state.queue, action.payload],
+      };
+    case 'SET_QUEUE':
+      return {
+        ...state,
+        queue: action.payload,
       };
     case 'REMOVE_FROM_QUEUE':
       return {
@@ -124,24 +134,61 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const queryClient = useQueryClient();
   const progressTrackingInterval = useRef<number | null>(null);
+  const audioElCreated = useRef<boolean>(false);
 
   // Initialize audio element only once
   useEffect(() => {
-    if (!audioRef.current) {
+    if (!audioElCreated.current) {
+      if (audioRef.current) {
+        // Clean up existing audio element to prevent duplicates
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
+      
       audioRef.current = new Audio();
+      audioElCreated.current = true;
       
       // Clean up on unmount
       return () => {
         if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current.src = '';
+          audioRef.current = null;
         }
         if (progressTrackingInterval.current) {
           window.clearInterval(progressTrackingInterval.current);
         }
+        audioElCreated.current = false;
       };
     }
   }, []);
+
+  // Fetch related episodes to queue when current episode changes
+  useEffect(() => {
+    const fetchAndQueueRelatedEpisodes = async () => {
+      if (state.currentEpisode && state.queue.length === 0) {
+        try {
+          const relatedEpisodes = await getEpisodesByArea(state.currentEpisode.area);
+          
+          // Filter out current episode and create a queue of up to 5 related episodes
+          if (relatedEpisodes && relatedEpisodes.length > 0) {
+            const filteredEpisodes = relatedEpisodes
+              .filter(ep => ep.id !== state.currentEpisode?.id)
+              .slice(0, 5);
+              
+            if (filteredEpisodes.length > 0) {
+              dispatch({ type: 'SET_QUEUE', payload: filteredEpisodes });
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching related episodes for queue:', error);
+        }
+      }
+    };
+    
+    fetchAndQueueRelatedEpisodes();
+  }, [state.currentEpisode]);
 
   // Handle audio source changes
   useEffect(() => {
@@ -185,7 +232,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           dispatch({ type: 'REMOVE_FROM_QUEUE', payload: nextEpisode.id });
           toast({
             title: "Reproduzindo próximo episódio",
-            description: nextEpisode.titulo
+            description: nextEpisode.titulo,
+            duration: 3000,
           });
         }
       };
