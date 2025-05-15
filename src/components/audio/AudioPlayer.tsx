@@ -4,6 +4,7 @@ import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-rea
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/context/AudioPlayerContext';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 interface AudioPlayerProps {
   src: string;
@@ -44,41 +45,31 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [audioAnalyzerData, setAudioAnalyzerData] = useState<number[]>(Array(20).fill(0));
   const progressRef = useRef<HTMLDivElement>(null);
   const analyzerIntervalRef = useRef<number | null>(null);
-
-  // Generate random audio color
-  useEffect(() => {
-    setAudioColor('#E50914'); // Keep with JuriCast red accent
-    
-    // Clean up analyzer interval on unmount
-    return () => {
-      if (analyzerIntervalRef.current) {
-        window.clearInterval(analyzerIntervalRef.current);
-      }
-    };
-  }, [src]);
+  const soundWaveIntervalRef = useRef<number | null>(null);
   
-  // Set up audio analyzer visualization effect
+  // Generate sound wave visualization
   useEffect(() => {
+    // Clear previous interval if exists
+    if (soundWaveIntervalRef.current) {
+      window.clearInterval(soundWaveIntervalRef.current);
+    }
+    
     if (isPlaying) {
-      if (analyzerIntervalRef.current) {
-        window.clearInterval(analyzerIntervalRef.current);
-      }
-      
-      // Simulate audio analysis with random data when playing
-      analyzerIntervalRef.current = window.setInterval(() => {
-        const newData = Array(20).fill(0).map(() => 
+      // Simulate sound waves with pulsating circles when playing
+      soundWaveIntervalRef.current = window.setInterval(() => {
+        const newData = Array(30).fill(0).map(() => 
           Math.max(0.2, Math.random() * (isPlaying ? 1 : 0.3))
         );
         setAudioAnalyzerData(newData);
-      }, 150);
+      }, 120);
     } else {
-      // Tone down visualization when paused
+      // Calm down visualization when paused
       setAudioAnalyzerData(audioAnalyzerData.map(v => v * 0.5));
     }
     
     return () => {
-      if (analyzerIntervalRef.current) {
-        window.clearInterval(analyzerIntervalRef.current);
+      if (soundWaveIntervalRef.current) {
+        window.clearInterval(soundWaveIntervalRef.current);
       }
     };
   }, [isPlaying]);
@@ -111,9 +102,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Create array of particles for falling glow visualization
+  // Create array of particles for audio visualization
   const particles = Array.from({
-    length: 50
+    length: 60
   }).map((_, index) => ({
     id: index,
     x: Math.random() * 100,
@@ -129,7 +120,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       transition={{ duration: 0.5, delay: 0.2 }}
       className="p-4 bg-juricast-card rounded-lg border border-juricast-card/30 px-[28px] py-6 relative overflow-hidden"
     >
-      {/* Elegant Falling Glow Visualization */}
+      {/* Audio Visualization Effects */}
       <div className="absolute inset-0 overflow-hidden">
         {isPlaying && particles.map(particle => (
           <motion.div 
@@ -154,22 +145,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         ))}
       </div>
       
-      {/* Audio Waveform Visualization */}
-      {isPlaying && (
-        <div className="absolute bottom-0 left-0 right-0 h-12 flex items-end justify-center gap-0.5 px-6 opacity-60">
-          {audioAnalyzerData.map((value, index) => (
-            <motion.div
-              key={index}
-              initial={{ height: 0 }}
-              animate={{ height: `${value * 40}px` }}
-              transition={{ duration: 0.2 }}
-              className="w-1 bg-gradient-to-t from-juricast-accent to-juricast-accent/50 rounded-t"
-              style={{ opacity: isPlaying ? 1 : 0.5 }}
-            />
-          ))}
-        </div>
-      )}
-      
       <div className="relative z-10">
         <div className="flex flex-col items-center mb-4">
           <motion.div 
@@ -177,36 +152,68 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Thumbnail with elegant glow effect */}
+            {/* Thumbnail with sound wave effect */}
             <img 
               src={thumbnail || '/placeholder.svg'} 
               alt={title} 
               className="w-full h-full object-cover"
             />
-            <motion.div 
-              className="absolute inset-0 bg-black/30 flex items-center justify-center"
-              animate={{
-                backgroundColor: isPlaying ? ['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.3)'] : 'rgba(0,0,0,0.3)'
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            >
-              {/* Play/Pause Button Overlay */}
-              <motion.button
-                onClick={handlePlayPause}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-16 h-16 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm"
-              >
-                {isPlaying ? 
-                  <Pause size={32} className="text-white" /> : 
-                  <Play size={32} className="text-white ml-1" />
-                }
-              </motion.button>
-            </motion.div>
+            
+            {/* Sound wave visualization overlay */}
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              {isPlaying && (
+                <div className="absolute inset-0 flex justify-center items-center">
+                  <div className="relative w-32 h-32">
+                    {audioAnalyzerData.map((value, idx) => (
+                      <motion.div
+                        key={idx}
+                        className="absolute top-1/2 left-1/2 rounded-full bg-white/30"
+                        style={{
+                          width: `${value * 100 + 20}%`,
+                          height: `${value * 100 + 20}%`,
+                          transform: 'translate(-50%, -50%)',
+                          opacity: 0.3
+                        }}
+                        animate={{
+                          scale: [0.8, 1, 0.8],
+                          opacity: [0.2, 0.4, 0.2],
+                        }}
+                        transition={{
+                          duration: 2 + Math.random() * 2,
+                          repeat: Infinity,
+                          delay: idx * 0.1,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Radial sound waves when playing */}
+              {isPlaying && (
+                <>
+                  {[1, 2, 3].map((ring) => (
+                    <motion.div
+                      key={ring}
+                      className="absolute top-1/2 left-1/2 rounded-full border border-white/30"
+                      style={{ transform: 'translate(-50%, -50%)' }}
+                      animate={{
+                        width: ['30%', '100%'],
+                        height: ['30%', '100%'],
+                        opacity: [0.8, 0],
+                      }}
+                      transition={{
+                        duration: 2 * ring,
+                        repeat: Infinity,
+                        delay: ring * 0.5,
+                        ease: "easeOut"
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+            </div>
           </motion.div>
         </div>
 
@@ -221,8 +228,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         >
           <motion.div 
             className="h-full bg-juricast-accent"
-            style={{ width: `${currentTime / duration * 100}%` }}
-            animate={{ width: `${currentTime / duration * 100}%` }}
+            style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
+            animate={{ width: `${(currentTime / duration) * 100 || 0}%` }}
             transition={{ ease: "linear" }}
           />
         </div>
@@ -232,6 +239,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           <span>{formatTime(duration)}</span>
         </div>
 
+        {/* Controles de reprodução - APENAS O BOTÃO VERMELHO COMO PRINCIPAL */}
         <div className="flex justify-center items-center gap-4 mb-4">
           <motion.button 
             onClick={() => skipBackward(10)} 
