@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Play, File, Gavel, Scale, Book } from 'lucide-react';
+import { Heart, Play, File, Gavel, Scale, Book, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface PodcastCardProps {
@@ -34,6 +34,16 @@ const PodcastCard: React.FC<PodcastCardProps> = ({
     return <File size={14} />;
   };
 
+  // Generate sparkle particles for animation
+  const sparkleCount = 15;
+  const sparkles = Array.from({ length: sparkleCount }).map((_, index) => ({
+    id: index,
+    size: Math.random() * 2 + 1,
+    left: `${Math.random() * 100}%`,
+    animationDelay: `${Math.random() * 5}s`,
+    animationDuration: `${Math.random() * 3 + 5}s`,
+  }));
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -43,7 +53,35 @@ const PodcastCard: React.FC<PodcastCardProps> = ({
         scale: 1.05, 
         transition: { duration: 0.2 }
       }}
+      className="relative"
     >
+      {/* Subtle falling sparkles on entire card */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {sparkles.map((sparkle) => (
+          <motion.div
+            key={sparkle.id}
+            className="absolute rounded-full bg-white/20"
+            style={{
+              width: `${sparkle.size}px`,
+              height: `${sparkle.size}px`,
+              left: sparkle.left,
+              top: '-10px',
+              opacity: 0,
+            }}
+            animate={{
+              y: ['0%', '100%'],
+              opacity: [0, 0.3, 0],
+            }}
+            transition={{
+              duration: parseFloat(sparkle.animationDuration),
+              delay: parseFloat(sparkle.animationDelay),
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+        ))}
+      </div>
+
       <Link to={`/podcast/${id}`} className="block">
         <div className="netflix-card group bg-juricast-card">
           <div className="relative overflow-hidden">
@@ -69,6 +107,33 @@ const PodcastCard: React.FC<PodcastCardProps> = ({
               </span>
             </div>
             
+            {/* Enhanced sparkles for thumbnail image */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <motion.div
+                  key={`inner-${index}`}
+                  className="absolute"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: '-5px',
+                  }}
+                  animate={{
+                    y: ['0%', '120%'],
+                    opacity: [0, 0.7, 0],
+                    scale: [0.7, 1, 0.7]
+                  }}
+                  transition={{
+                    duration: Math.random() * 3 + 4,
+                    delay: Math.random() * 5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <Sparkles size={Math.random() * 10 + 6} className="text-white/40" />
+                </motion.div>
+              ))}
+            </div>
+
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
               <motion.div 
                 className="w-12 h-12 bg-juricast-accent/90 rounded-full flex items-center justify-center"
