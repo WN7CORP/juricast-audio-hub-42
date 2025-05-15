@@ -83,7 +83,6 @@ export interface SupabaseEpisode {
   imagem_miniatura: string;
   sequencia?: string;
   data_publicacao?: string;
-  favorito?: boolean;
   comentarios?: number;
   curtidas?: number;
 }
