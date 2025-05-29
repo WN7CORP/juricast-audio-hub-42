@@ -33,7 +33,7 @@ const TopNavigation = () => {
       window.location.href = `/busca?q=${encodeURIComponent(searchQuery)}`;
     }
   };
-  return <div className="sticky top-0 z-40 bg-gradient-to-b from-juricast-background to-juricast-background/95 backdrop-blur-md border-b border-juricast-card/20 py-2">
+  return <div className="sticky top-0 z-40 bg-gradient-to-b from-juricast-background to-juricast-background/95 backdrop-blur-md border-b border-juricast-card/20 py-0">
       <div className="flex flex-col">
         {/* Header with logo and search */}
         <div className="flex justify-between items-center px-4 py-2">
