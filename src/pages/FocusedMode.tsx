@@ -29,13 +29,10 @@ const FocusedMode = () => {
   } = useFocusedMode();
   
   const { 
-    currentEpisode, 
-    isPlaying, 
-    currentTime, 
-    duration,
+    state,
     play,
     pause,
-    playEpisode 
+    resume
   } = useAudioPlayer();
 
   const [showPlaylist, setShowPlaylist] = useState(false);
@@ -57,23 +54,43 @@ const FocusedMode = () => {
   const handleStartFocusedMode = (playlist: PodcastEpisode[], startIndex = 0) => {
     enableFocusedMode(playlist, startIndex);
     if (playlist[startIndex]) {
-      playEpisode(playlist[startIndex]);
+      play(playlist[startIndex]);
     }
   };
 
   const handleNext = () => {
-    if (goToNextEpisode()) {
-      playEpisode(currentPlaylist[currentEpisodeIndex + 1]);
+    const hasNext = goToNextEpisode();
+    if (hasNext && currentPlaylist[currentEpisodeIndex + 1]) {
+      play(currentPlaylist[currentEpisodeIndex + 1]);
     }
   };
 
   const handlePrevious = () => {
-    if (goToPreviousEpisode()) {
-      playEpisode(currentPlaylist[currentEpisodeIndex - 1]);
+    const hasPrevious = goToPreviousEpisode();
+    if (hasPrevious && currentPlaylist[currentEpisodeIndex - 1]) {
+      play(currentPlaylist[currentEpisodeIndex - 1]);
     }
   };
 
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const progress = state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0;
+
+  const handlePlayPause = () => {
+    if (state.isPlaying) {
+      pause();
+    } else if (state.currentEpisode) {
+      resume();
+    }
+  };
+
+  const handleEpisodeClick = (episode: PodcastEpisode, index: number) => {
+    play(episode);
+    // Update focused mode to this episode index
+    const episodeIndex = currentPlaylist.findIndex(ep => ep.id === episode.id);
+    if (episodeIndex !== -1) {
+      // We would need to add a method to update the current index in FocusedModeContext
+      // For now, just play the episode
+    }
+  };
 
   if (!isFocusedMode) {
     return (
@@ -253,8 +270,8 @@ const FocusedMode = () => {
                   <div className="space-y-2">
                     <Progress value={progress} className="h-2" />
                     <div className="flex justify-between text-sm text-juricast-muted">
-                      <span>{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, '0')}</span>
-                      <span>{Math.floor(duration / 60)}:{String(Math.floor(duration % 60)).padStart(2, '0')}</span>
+                      <span>{Math.floor(state.currentTime / 60)}:{String(Math.floor(state.currentTime % 60)).padStart(2, '0')}</span>
+                      <span>{Math.floor(state.duration / 60)}:{String(Math.floor(state.duration % 60)).padStart(2, '0')}</span>
                     </div>
                   </div>
 
@@ -284,10 +301,10 @@ const FocusedMode = () => {
 
                     <Button
                       size="icon"
-                      onClick={isPlaying ? pause : play}
+                      onClick={handlePlayPause}
                       className="w-14 h-14 bg-gradient-to-r from-juricast-accent to-juricast-accent/90 hover:from-juricast-accent/90 hover:to-juricast-accent"
                     >
-                      {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                      {state.isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
                     </Button>
 
                     <Button
@@ -345,15 +362,12 @@ const FocusedMode = () => {
                   <motion.div
                     key={episode.id}
                     className={cn(
-                      "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors",
+                      "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors group",
                       index === currentEpisodeIndex 
                         ? "bg-juricast-accent text-white" 
                         : "hover:bg-juricast-card/50"
                     )}
-                    onClick={() => {
-                      playEpisode(episode);
-                      // Update the focused mode index
-                    }}
+                    onClick={() => handleEpisodeClick(episode, index)}
                   >
                     <span className="text-xs font-medium w-6 text-center">
                       {index + 1}
