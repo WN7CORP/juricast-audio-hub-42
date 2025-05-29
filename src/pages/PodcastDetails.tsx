@@ -156,13 +156,7 @@ const PodcastDetails = () => {
             <h1 className={cn("font-bold truncate", isMobile ? "text-xl" : "text-2xl")}>{episode.titulo}</h1>
           </div>
           <div className="flex gap-2">
-            <motion.button whileHover={{
-            scale: 1.1
-          }} whileTap={{
-            scale: 0.9
-          }} onClick={handleShareEpisode} className="p-3 rounded-full bg-juricast-card hover:bg-juricast-background/50 transition-colors" aria-label="Compartilhar">
-              <Share2 size={isMobile ? 18 : 20} />
-            </motion.button>
+            
           </div>
         </div>
 
