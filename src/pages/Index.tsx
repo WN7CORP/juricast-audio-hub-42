@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import PlaylistItem from '@/components/podcast/PlaylistItem';
 import AreaCard from '@/components/podcast/AreaCard';
+import CategoryCard from '@/components/podcast/CategoryCard';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Play, GraduationCap, BookOpen } from 'lucide-react';
@@ -41,6 +42,10 @@ const Index = () => {
   // Separate areas by category
   const juridicoAreas = areas.filter(area => area.category === 'juridico');
   const educativoAreas = areas.filter(area => area.category === 'educativo');
+
+  // Calculate totals for category cards
+  const juridicoTotal = juridicoAreas.reduce((sum, area) => sum + area.episodeCount, 0);
+  const educativoTotal = educativoAreas.reduce((sum, area) => sum + area.episodeCount, 0);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -125,6 +130,45 @@ const Index = () => {
           </motion.section>
         )}
 
+        {/* Enhanced Category Cards */}
+        <motion.section variants={itemVariants}>
+          <motion.div 
+            className="text-center space-y-4 mb-8"
+            variants={sectionHeaderVariants}
+          >
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-juricast-accent to-juricast-text bg-clip-text text-transparent">
+              Explore por Categoria
+            </h2>
+            <p className="text-juricast-muted text-lg max-w-2xl mx-auto">
+              Descubra conteúdo jurídico especializado organizado por área de conhecimento
+            </p>
+          </motion.div>
+
+          <motion.div 
+            className="grid md:grid-cols-2 gap-6 mb-8"
+            variants={containerVariants}
+          >
+            <motion.div variants={itemVariants}>
+              <CategoryCard
+                title="Áreas do Direito"
+                description="Conteúdo jurídico especializado dividido por áreas de atuação profissional"
+                episodeCount={juridicoTotal}
+                type="juridico"
+                href="#areas-direito"
+              />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <CategoryCard
+                title="Educação Jurídica"
+                description="Conteúdo educativo, dicas práticas e desenvolvimento profissional"
+                episodeCount={educativoTotal}
+                type="educativo"
+                href="#educacao-juridica"
+              />
+            </motion.div>
+          </motion.div>
+        </motion.section>
+
         {/* Focused Mode Section */}
         <motion.section variants={itemVariants}>
           <Card className="p-6 border-juricast-card/20 bg-gradient-to-r from-juricast-accent/10 to-juricast-accent/5">
@@ -137,7 +181,7 @@ const Index = () => {
                   Modo Focado
                 </h3>
                 <p className="text-juricast-muted">
-                  Ouça episódios em sequência sem interrupções para máximo foco
+                  Ouça episódios em sequência sem interrupções para máximo foco no aprendizado
                 </p>
               </div>
               <Link to="/modo-focado">
@@ -151,22 +195,25 @@ const Index = () => {
 
         {/* Áreas do Direito - Only Juridico Areas */}
         {juridicoAreas.length > 0 && (
-          <motion.section variants={itemVariants}>
+          <motion.section id="areas-direito" variants={itemVariants}>
             <motion.div 
-              className="flex justify-between items-center mb-4"
+              className="flex justify-between items-center mb-6"
               variants={sectionHeaderVariants}
             >
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <BookOpen className="w-6 h-6 text-juricast-accent" />
                 Áreas do Direito
               </h2>
+              <Link to="/categoria/juridico" className="text-juricast-accent hover:underline text-sm">
+                Ver todas
+              </Link>
             </motion.div>
 
             <motion.div 
               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
               variants={containerVariants}
             >
-              {juridicoAreas.map((area, index) => (
+              {juridicoAreas.slice(0, 8).map((area, index) => (
                 <motion.div key={area.name} variants={itemVariants}>
                   <AreaCard 
                     name={area.name}
@@ -181,15 +228,18 @@ const Index = () => {
 
         {/* Educação Jurídica - Only Educativo Areas */}
         {educativoAreas.length > 0 && (
-          <motion.section variants={itemVariants}>
+          <motion.section id="educacao-juridica" variants={itemVariants}>
             <motion.div 
-              className="flex justify-between items-center mb-4"
+              className="flex justify-between items-center mb-6"
               variants={sectionHeaderVariants}
             >
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <GraduationCap className="w-6 h-6 text-juricast-accent" />
                 Educação Jurídica
               </h2>
+              <Link to="/categoria/educativo" className="text-juricast-accent hover:underline text-sm">
+                Ver todas
+              </Link>
             </motion.div>
 
             <motion.div 

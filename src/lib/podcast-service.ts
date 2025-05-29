@@ -208,7 +208,7 @@ export async function getAllAreas(): Promise<AreaCard[]> {
 
 // Helper function to categorize areas
 function getCategoryForArea(areaName: string): 'juridico' | 'educativo' | 'pratico' {
-  const educativeAreas = ['Artigos comentados', 'Dicas OAB'];
+  const educativeAreas = ['Artigos comentados', 'Artigos Comentados', 'Dicas OAB', 'Dicas para OAB'];
   return educativeAreas.includes(areaName) ? 'educativo' : 'juridico';
 }
 
