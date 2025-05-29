@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
@@ -6,12 +5,17 @@ import PlaylistItem from '@/components/podcast/PlaylistItem';
 import AreaCard from '@/components/podcast/AreaCard';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Play, GraduationCap, BookOpen } from 'lucide-react';
 import { getFeaturedEpisodes, getRecentEpisodes, getInProgressEpisodes, getAllAreas, saveUserIP } from '@/lib/podcast-service';
 import { PodcastEpisode, AreaCard as AreaCardType } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useFocusedMode } from '@/context/FocusedModeContext';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 const Index = () => {
   const [areas, setAreas] = useState<AreaCardType[]>([]);
+  const { enableFocusedMode } = useFocusedMode();
   
   // Fetch all podcast areas
   const { data: inProgressEpisodes = [], isLoading: loadingInProgress } = useQuery({
@@ -33,6 +37,10 @@ const Index = () => {
     
     fetchAreas();
   }, []);
+
+  // Separate areas by category
+  const juridicoAreas = areas.filter(area => area.category === 'juridico');
+  const educativoAreas = areas.filter(area => area.category === 'educativo');
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -117,23 +125,48 @@ const Index = () => {
           </motion.section>
         )}
 
+        {/* Focused Mode Section */}
         <motion.section variants={itemVariants}>
-          <motion.div 
-            className="flex justify-between items-center mb-4"
-            variants={sectionHeaderVariants}
-          >
-            <h2 className="text-2xl font-bold">Áreas do Direito</h2>
-          </motion.div>
+          <Card className="p-6 border-juricast-card/20 bg-gradient-to-r from-juricast-accent/10 to-juricast-accent/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-juricast-accent to-juricast-accent/80 rounded-lg flex items-center justify-center">
+                    <Play className="w-4 h-4 text-white" />
+                  </div>
+                  Modo Focado
+                </h3>
+                <p className="text-juricast-muted">
+                  Ouça episódios em sequência sem interrupções para máximo foco
+                </p>
+              </div>
+              <Link to="/modo-focado">
+                <Button className="bg-gradient-to-r from-juricast-accent to-juricast-accent/90 hover:from-juricast-accent/90 hover:to-juricast-accent">
+                  Experimentar
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </motion.section>
 
-          <motion.div 
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-            variants={containerVariants}
-          >
-            {areas.length === 0 
-              ? [...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-juricast-card animate-pulse rounded-lg h-32"></div>
-                ))
-              : areas.map((area, index) => (
+        {/* Áreas do Direito - Only Juridico Areas */}
+        {juridicoAreas.length > 0 && (
+          <motion.section variants={itemVariants}>
+            <motion.div 
+              className="flex justify-between items-center mb-4"
+              variants={sectionHeaderVariants}
+            >
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <BookOpen className="w-6 h-6 text-juricast-accent" />
+                Áreas do Direito
+              </h2>
+            </motion.div>
+
+            <motion.div 
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+              variants={containerVariants}
+            >
+              {juridicoAreas.map((area, index) => (
                 <motion.div key={area.name} variants={itemVariants}>
                   <AreaCard 
                     name={area.name}
@@ -141,10 +174,40 @@ const Index = () => {
                     slug={area.slug}
                   />
                 </motion.div>
-              ))
-            }
-          </motion.div>
-        </motion.section>
+              ))}
+            </motion.div>
+          </motion.section>
+        )}
+
+        {/* Educação Jurídica - Only Educativo Areas */}
+        {educativoAreas.length > 0 && (
+          <motion.section variants={itemVariants}>
+            <motion.div 
+              className="flex justify-between items-center mb-4"
+              variants={sectionHeaderVariants}
+            >
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <GraduationCap className="w-6 h-6 text-juricast-accent" />
+                Educação Jurídica
+              </h2>
+            </motion.div>
+
+            <motion.div 
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+              variants={containerVariants}
+            >
+              {educativoAreas.map((area, index) => (
+                <motion.div key={area.name} variants={itemVariants}>
+                  <AreaCard 
+                    name={area.name}
+                    episodeCount={area.episodeCount}
+                    slug={area.slug}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.section>
+        )}
 
         <RecentEpisodes />
       </motion.div>

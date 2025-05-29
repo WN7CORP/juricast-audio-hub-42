@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Sidebar from './Sidebar';
+import CollapsibleSidebar from './CollapsibleSidebar';
 import TopNavigation from './TopNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -15,7 +15,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <div className="flex min-h-screen bg-juricast-background text-juricast-text overflow-hidden">
-      {!isMobile && <Sidebar />}
+      {!isMobile && <CollapsibleSidebar />}
       
       <main className="flex-1 flex flex-col w-full max-w-full">
         <TopNavigation />
@@ -27,16 +27,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           transition={{ duration: 0.3 }}
           className={cn(
             "flex-1 overflow-y-auto overflow-x-hidden",
-            // Mobile optimizations
             isMobile 
-              ? "p-2 pb-24" // Less padding on mobile, more bottom padding for mini player
-              : "p-6 pb-20"  // Standard padding on desktop
+              ? "p-2 pb-24" 
+              : "p-6 pb-20"  
           )}
         >
           <AnimatePresence mode="wait">
             <div className={cn(
               "max-w-full mx-auto",
-              // Responsive container
               isMobile ? "px-1" : "px-0"
             )}>
               {children}

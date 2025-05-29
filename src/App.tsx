@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
+import { FocusedModeProvider } from "@/context/FocusedModeContext";
 import MiniPlayer from "@/components/audio/MiniPlayer";
 import Index from "./pages/Index";
 import PodcastDetails from "./pages/PodcastDetails";
@@ -17,6 +18,7 @@ import ThemeDetails from "./pages/ThemeDetails";
 import NotFound from "./pages/NotFound";
 import SearchResults from "./pages/SearchResults";
 import NewEpisodes from "./pages/NewEpisodes";
+import FocusedMode from "./pages/FocusedMode";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +45,7 @@ const AppRoutes = () => {
           <Route path="/categoria/:area/tema/:theme" element={<ThemeDetails />} />
           <Route path="/episodios-novos" element={<NewEpisodes />} />
           <Route path="/busca" element={<SearchResults />} />
+          <Route path="/modo-focado" element={<FocusedMode />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
@@ -55,11 +58,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AudioPlayerProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <FocusedModeProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </FocusedModeProvider>
       </AudioPlayerProvider>
     </TooltipProvider>
   </QueryClientProvider>
