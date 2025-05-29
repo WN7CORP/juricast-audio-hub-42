@@ -1,4 +1,5 @@
 
+
 // Fix the formatEpisodes function at the bottom of the file to handle proper types
 
 import { supabase } from "@/integrations/supabase/client";
@@ -438,92 +439,3 @@ function formatEpisodes(episodes: SupabaseEpisode[]): PodcastEpisode[] {
   }));
 }
 
-// Get all themes for a specific area
-export async function getThemesByArea(area: string): Promise<ThemeCard[]> {
-  try {
-    const formattedArea = area
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-    
-    const { data, error } = await supabase
-      .from('JURIFY')
-      .select('tema, area')
-      .eq('area', formattedArea);
-    
-    if (error) {
-      console.error(`Error fetching themes for area ${area}:`, error);
-      throw error;
-    }
-
-    const themesMap = new Map<string, {count: number, area: string}>();
-    
-    // Count episodes per theme
-    data?.forEach(episode => {
-      if (episode.tema) {
-        const current = themesMap.get(episode.tema) || {count: 0, area: episode.area};
-        themesMap.set(episode.tema, {
-          count: current.count + 1,
-          area: episode.area
-        });
-      }
-    });
-    
-    // Convert to array of theme cards
-    const themes: ThemeCard[] = Array.from(themesMap.entries()).map(([name, info]) => ({
-      name,
-      episodeCount: info.count,
-      slug: name.toLowerCase().replace(/\s+/g, '-'),
-      area: formattedArea,
-      image: getThemeImage(name)
-    }));
-    
-    return themes.sort((a, b) => a.name.localeCompare(b.name));
-  } catch (error) {
-    console.error(`Error in getThemesByArea for ${area}:`, error);
-    return [];
-  }
-}
-
-// Helper function to get representative image for an area
-function getAreaImage(areaName: string): string {
-  // Try to find an episode with this area to use its image
-  return '/placeholder.svg'; // Fallback to placeholder
-}
-
-// Helper function to get representative image for a theme
-function getThemeImage(themeName: string): string {
-  // Try to find an episode with this theme to use its image
-  return '/placeholder.svg'; // Fallback to placeholder
-}
-
-// Get featured episodes (most recent from each area)
-export async function getFeaturedEpisodes(): Promise<PodcastEpisode[]> {
-  return getAllEpisodes().then(episodes => {
-    // Group episodes by area
-    const episodesByArea = episodes.reduce<Record<string, PodcastEpisode[]>>((acc, episode) => {
-      if (!acc[episode.area]) {
-        acc[episode.area] = [];
-      }
-      acc[episode.area].push(episode);
-      return acc;
-    }, {});
-    
-    // Get the most recent episode from each area
-    const featuredEpisodes = Object.values(episodesByArea)
-      .map(areaEpisodes => areaEpisodes[0])
-      .sort((a, b) => (b.sequencia || '').localeCompare(a.sequencia || ''))
-      .slice(0, 6);
-      
-    return featuredEpisodes;
-  });
-}
-
-// Get recent episodes
-export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
-  return getAllEpisodes().then(episodes => 
-    episodes
-      .sort((a, b) => (b.sequencia || '').localeCompare(a.sequencia || ''))
-      .slice(0, 6)
-  );
-}
