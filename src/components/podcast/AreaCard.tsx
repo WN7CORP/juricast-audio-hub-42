@@ -9,15 +9,13 @@ interface AreaCardProps {
   episodeCount: number;
   slug: string;
   image?: string;
-  category?: 'juridico' | 'educativo' | 'pratico';
 }
 
 const AreaCard: React.FC<AreaCardProps> = ({
   name,
   episodeCount,
   slug,
-  image,
-  category
+  image
 }) => {
   // Generate a consistent gradient background based on the name
   const generateGradient = (name: string) => {

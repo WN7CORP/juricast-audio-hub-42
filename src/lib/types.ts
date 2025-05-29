@@ -1,3 +1,4 @@
+
 export interface PodcastEpisode {
   id: number;
   titulo: string;
@@ -13,7 +14,6 @@ export interface PodcastEpisode {
   comentarios?: number;
   curtidas?: number;
   progresso?: number;
-  duracao?: string;
 }
 
 export interface UserProgress {

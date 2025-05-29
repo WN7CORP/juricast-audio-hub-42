@@ -9,7 +9,6 @@ import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
 import { FocusedModeProvider } from "@/context/FocusedModeContext";
 import MiniPlayer from "@/components/audio/MiniPlayer";
 import Index from "./pages/Index";
-import Categories from "./pages/Categories";
 import PodcastDetails from "./pages/PodcastDetails";
 import Favorites from "./pages/Favorites";
 import InProgress from "./pages/InProgress";
