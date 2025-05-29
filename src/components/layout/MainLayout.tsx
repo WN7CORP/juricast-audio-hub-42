@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import TopNavigation from './TopNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface MainLayoutProps {
   children: React.ReactNode;
