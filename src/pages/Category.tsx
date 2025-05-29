@@ -4,25 +4,35 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import ThemeCard from '@/components/podcast/ThemeCard';
-import { getThemesByArea } from '@/lib/podcast-service';
+import { getThemesByArea, getEpisodesByArea } from '@/lib/podcast-service';
 import { motion } from 'framer-motion';
 
 const Category = () => {
   const { category } = useParams<{category: string}>();
   
-  // Convert category slug to proper title case
+  // Convert category slug to proper title case with accent restoration
   const categoryTitle = category
-    ? category
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ')
+    ? getCategoryDisplayName(category)
     : '';
+  
+  console.log("🔍 Category page - slug:", category);
+  console.log("📝 Display name:", categoryTitle);
   
   const { data: themes = [], isLoading } = useQuery({
     queryKey: ['themesByCategory', category],
     queryFn: () => getThemesByArea(category || ''),
     enabled: !!category
   });
+
+  // Also fetch episodes to verify the area exists and has content
+  const { data: episodes = [] } = useQuery({
+    queryKey: ['episodesByCategory', category],
+    queryFn: () => getEpisodesByArea(category || ''),
+    enabled: !!category
+  });
+
+  console.log("📊 Episodes found:", episodes.length);
+  console.log("📊 Themes found:", themes.length);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -77,11 +87,37 @@ const Category = () => {
             <p className="text-juricast-muted text-center mb-4">
               Não encontramos temas na categoria {categoryTitle}.
             </p>
+            {episodes.length > 0 && (
+              <p className="text-sm text-juricast-muted text-center">
+                (Área encontrada com {episodes.length} episódios, mas sem temas específicos)
+              </p>
+            )}
           </div>
         )}
       </motion.div>
     </MainLayout>
   );
 };
+
+// Helper function to get proper display name with accents restored
+function getCategoryDisplayName(slug: string): string {
+  const displayNameMap: Record<string, string> = {
+    'direito-medico': 'Direito Médico',
+    'direito-do-trabalho': 'Direito do Trabalho',
+    'filosofia-do-direito': 'Filosofia do Direito',
+    'direito-constitucional': 'Direito Constitucional',
+    'direito-penal': 'Direito Penal',
+    'processo-penal': 'Processo Penal',
+    'processo-civil': 'Processo Civil',
+    'dicas-oab': 'Dicas OAB',
+    'artigos-comentados': 'Artigos Comentados'
+  };
+  
+  // Return mapped name if available, otherwise convert slug to title case
+  return displayNameMap[slug] || slug
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
 
 export default Category;

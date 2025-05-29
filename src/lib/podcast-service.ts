@@ -53,53 +53,62 @@ function ensureTagsAreArrays(episodes: any[]): SupabaseEpisode[] {
   }));
 }
 
-// Get episodes by area (category) - IMPROVED
+// Get episodes by area (category) - FIXED
 export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]> {
   try {
     if (!area) return [];
     
-    console.log("Searching for area:", area);
+    console.log("🔍 Searching for area:", area);
     
-    // First, try exact match
-    let { data, error } = await supabase
-      .from('JURIFY')
-      .select('*')
-      .ilike('area', area)
-      .order('sequencia', { ascending: true });
+    // Convert slug back to possible area names
+    const areaVariations = [
+      area,
+      area.replace(/-/g, ' '),
+      area.replace(/[-_]/g, ' '),
+      area.charAt(0).toUpperCase() + area.slice(1).replace(/-/g, ' '),
+      area.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+      // Add specific mappings for known areas
+      area === 'direito-medico' ? 'Direito Médico' : '',
+      area === 'direito-do-trabalho' ? 'Direito do Trabalho' : '',
+      area === 'filosofia-do-direito' ? 'Filosofia do Direito' : '',
+      area === 'direito-constitucional' ? 'Direito Constitucional' : '',
+      area === 'direito-penal' ? 'Direito Penal' : '',
+      area === 'processo-penal' ? 'Processo Penal' : '',
+      area === 'processo-civil' ? 'Processo Civil' : '',
+      area === 'dicas-oab' ? 'Dicas OAB' : '',
+      area === 'artigos-comentados' ? 'Artigos Comentados' : ''
+    ].filter(Boolean);
     
-    // If no exact match, try with spaces and variations
-    if (!data?.length) {
-      const areaVariations = [
-        area.replace(/-/g, ' '),
-        area.replace(/[-_]/g, ' '),
-        area.charAt(0).toUpperCase() + area.slice(1).replace(/-/g, ' '),
-        area.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-      ];
+    let data = null;
+    let error = null;
+    
+    // Try each variation using ILIKE for flexible matching
+    for (const variation of areaVariations) {
+      console.log("🔍 Trying variation:", variation);
       
-      for (const variation of areaVariations) {
-        const result = await supabase
-          .from('JURIFY')
-          .select('*')
-          .ilike('area', `%${variation}%`)
-          .order('sequencia', { ascending: true });
-        
-        if (result.data?.length) {
-          data = result.data;
-          error = result.error;
-          break;
-        }
+      const result = await supabase
+        .from('JURIFY')
+        .select('*')
+        .ilike('area', `%${variation}%`)
+        .order('data', { ascending: false });
+      
+      if (result.data?.length) {
+        data = result.data;
+        error = result.error;
+        console.log(`✅ Found ${data.length} episodes for variation: ${variation}`);
+        break;
       }
     }
     
     if (error) {
-      console.error(`Error fetching episodes for area ${area}:`, error);
+      console.error(`❌ Error fetching episodes for area ${area}:`, error);
       throw error;
     }
 
-    console.log(`Found ${data?.length || 0} episodes for area ${area}`);
+    console.log(`📊 Total episodes found for ${area}:`, data?.length || 0);
     return formatEpisodes(ensureTagsAreArrays(data || []));
   } catch (error) {
-    console.error(`Error in getEpisodesByArea for ${area}:`, error);
+    console.error(`❌ Error in getEpisodesByArea for ${area}:`, error);
     return [];
   }
 }
@@ -196,12 +205,14 @@ export async function getAllAreas(): Promise<AreaCard[]> {
       }
     });
     
+    console.log("📊 Areas found:", Array.from(areasMap.keys()));
+    
     // Convert to array of area cards with categorization
     const areas: AreaCard[] = Array.from(areasMap.entries()).map(([name, count], index) => ({
       id: index + 1,
       name,
       episodeCount: count,
-      slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      slug: createSlugFromAreaName(name),
       image: getAreaImage(name),
       category: getCategoryForArea(name)
     }));
@@ -220,6 +231,21 @@ export async function getAllAreas(): Promise<AreaCard[]> {
     console.error("Error in getAllAreas:", error);
     return [];
   }
+}
+
+// Helper function to create slug from area name - IMPROVED
+function createSlugFromAreaName(areaName: string): string {
+  return areaName
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[àáâãäå]/g, 'a')
+    .replace(/[èéêë]/g, 'e')
+    .replace(/[ìíîï]/g, 'i')
+    .replace(/[òóôõö]/g, 'o')
+    .replace(/[ùúûü]/g, 'u')
+    .replace(/[ç]/g, 'c')
+    .replace(/[ñ]/g, 'n')
+    .replace(/[^a-z0-9-]/g, '');
 }
 
 // Helper function to categorize areas - IMPROVED
@@ -242,15 +268,41 @@ function getCategoryForArea(areaName: string): 'juridico' | 'educativo' | 'prati
 // Get all themes for a specific area
 export async function getThemesByArea(area: string): Promise<ThemeCard[]> {
   try {
-    const formattedArea = area
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
+    // Convert slug back to possible area names using same logic as getEpisodesByArea
+    const areaVariations = [
+      area,
+      area.replace(/-/g, ' '),
+      area.replace(/[-_]/g, ' '),
+      area.charAt(0).toUpperCase() + area.slice(1).replace(/-/g, ' '),
+      area.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+      // Add specific mappings for known areas
+      area === 'direito-medico' ? 'Direito Médico' : '',
+      area === 'direito-do-trabalho' ? 'Direito do Trabalho' : '',
+      area === 'filosofia-do-direito' ? 'Filosofia do Direito' : '',
+      area === 'direito-constitucional' ? 'Direito Constitucional' : '',
+      area === 'direito-penal' ? 'Direito Penal' : '',
+      area === 'processo-penal' ? 'Processo Penal' : '',
+      area === 'processo-civil' ? 'Processo Civil' : '',
+      area === 'dicas-oab' ? 'Dicas OAB' : '',
+      area === 'artigos-comentados' ? 'Artigos Comentados' : ''
+    ].filter(Boolean);
     
-    const { data, error } = await supabase
-      .from('JURIFY')
-      .select('tema, area')
-      .eq('area', formattedArea);
+    let data = null;
+    let error = null;
+    
+    // Try each variation using ILIKE for flexible matching
+    for (const variation of areaVariations) {
+      const result = await supabase
+        .from('JURIFY')
+        .select('tema, area')
+        .ilike('area', `%${variation}%`);
+      
+      if (result.data?.length) {
+        data = result.data;
+        error = result.error;
+        break;
+      }
+    }
     
     if (error) {
       console.error(`Error fetching themes for area ${area}:`, error);
@@ -275,7 +327,7 @@ export async function getThemesByArea(area: string): Promise<ThemeCard[]> {
       name,
       episodeCount: info.count,
       slug: name.toLowerCase().replace(/\s+/g, '-'),
-      area: formattedArea,
+      area: info.area, // Use the actual area name from database
       image: getThemeImage(name)
     }));
     
@@ -326,7 +378,7 @@ export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
     const { data, error } = await supabase
       .from('JURIFY')
       .select('*')
-      .order('data_publicacao', { ascending: false })
+      .order('data', { ascending: false })
       .order('sequencia', { ascending: false })
       .limit(20);
     
