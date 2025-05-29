@@ -14,7 +14,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   return <div className="flex min-h-screen bg-juricast-background text-juricast-text overflow-hidden">
       {!isMobile && <CollapsibleSidebar />}
       
-      <main className="flex-1 flex flex-col w-full max-w-full px-0 my-0">
+      <main className="flex-1 flex flex-col w-full max-w-full px-0 py-0 my-[32px]">
         <TopNavigation />
         
         <motion.div initial={{
