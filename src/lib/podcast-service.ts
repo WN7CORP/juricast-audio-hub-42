@@ -60,11 +60,36 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
     
     console.log("Searching for area:", area);
     
-    const { data, error } = await supabase
+    // First, try exact match
+    let { data, error } = await supabase
       .from('JURIFY')
       .select('*')
-      .or(`area.ilike.%${area}%,area.ilike.%${area.replace('-', ' ')}%,area.ilike.%${area.replace(/[-_]/g, ' ')}%`)
+      .ilike('area', area)
       .order('sequencia', { ascending: true });
+    
+    // If no exact match, try with spaces and variations
+    if (!data?.length) {
+      const areaVariations = [
+        area.replace(/-/g, ' '),
+        area.replace(/[-_]/g, ' '),
+        area.charAt(0).toUpperCase() + area.slice(1).replace(/-/g, ' '),
+        area.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+      ];
+      
+      for (const variation of areaVariations) {
+        const result = await supabase
+          .from('JURIFY')
+          .select('*')
+          .ilike('area', `%${variation}%`)
+          .order('sequencia', { ascending: true });
+        
+        if (result.data?.length) {
+          data = result.data;
+          error = result.error;
+          break;
+        }
+      }
+    }
     
     if (error) {
       console.error(`Error fetching episodes for area ${area}:`, error);
@@ -301,7 +326,7 @@ export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
     const { data, error } = await supabase
       .from('JURIFY')
       .select('*')
-      .order('data_publicacao', { ascending: false, nullsLast: true })
+      .order('data_publicacao', { ascending: false })
       .order('sequencia', { ascending: false })
       .limit(20);
     

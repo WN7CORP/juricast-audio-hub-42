@@ -276,6 +276,9 @@ const NewEpisodesCarousel = () => {
                 <div className="p-3">
                   <h3 className="font-medium text-sm line-clamp-2 mb-1">{episode.titulo}</h3>
                   <p className="text-xs text-juricast-muted">{episode.area}</p>
+                  {episode.data_publicacao && (
+                    <p className="text-xs text-juricast-muted mt-1">{episode.data_publicacao}</p>
+                  )}
                 </div>
               </Link>
             </motion.div>
@@ -321,7 +324,7 @@ const RecentEpisodes = () => {
           ))
         ) : (
           recentEpisodes.slice(0, 5).map((episode, index) => (
-            <PlaylistItem key={episode.id} episode={episode} index={index + 1} />
+            <PlaylistItem key={episode.id} episode={episode} index={index + 1} showDate={true} />
           ))
         )}
       </motion.div>
