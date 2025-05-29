@@ -1,5 +1,3 @@
-
-
 // Fix the formatEpisodes function at the bottom of the file to handle proper types
 
 import { supabase } from "@/integrations/supabase/client";
@@ -55,24 +53,17 @@ function ensureTagsAreArrays(episodes: any[]): SupabaseEpisode[] {
   }));
 }
 
-// Get episodes by area (category)
+// Get episodes by area (category) - IMPROVED
 export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]> {
   try {
     if (!area) return [];
     
-    // Format the area string to match how it might be stored in the database
-    // First letter capitalized, spaces restored from dashes
-    const formattedArea = area
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-    
-    console.log("Searching for area:", formattedArea);
+    console.log("Searching for area:", area);
     
     const { data, error } = await supabase
       .from('JURIFY')
       .select('*')
-      .ilike('area', `%${formattedArea}%`)
+      .or(`area.ilike.%${area}%,area.ilike.%${area.replace('-', ' ')}%,area.ilike.%${area.replace(/[-_]/g, ' ')}%`)
       .order('sequencia', { ascending: true });
     
     if (error) {
@@ -80,7 +71,7 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
       throw error;
     }
 
-    console.log(`Found ${data?.length || 0} episodes for area ${formattedArea}`);
+    console.log(`Found ${data?.length || 0} episodes for area ${area}`);
     return formatEpisodes(ensureTagsAreArrays(data || []));
   } catch (error) {
     console.error(`Error in getEpisodesByArea for ${area}:`, error);
@@ -158,7 +149,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
   }
 }
 
-// Get all unique areas with episode counts and categorization
+// Get all unique areas with episode counts and categorization - IMPROVED
 export async function getAllAreas(): Promise<AreaCard[]> {
   try {
     const { data, error } = await supabase
@@ -185,7 +176,7 @@ export async function getAllAreas(): Promise<AreaCard[]> {
       id: index + 1,
       name,
       episodeCount: count,
-      slug: name.toLowerCase().replace(/\s+/g, '-'),
+      slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
       image: getAreaImage(name),
       category: getCategoryForArea(name)
     }));
@@ -206,10 +197,21 @@ export async function getAllAreas(): Promise<AreaCard[]> {
   }
 }
 
-// Helper function to categorize areas
+// Helper function to categorize areas - IMPROVED
 function getCategoryForArea(areaName: string): 'juridico' | 'educativo' | 'pratico' {
-  const educativeAreas = ['Artigos comentados', 'Artigos Comentados', 'Dicas OAB', 'Dicas para OAB'];
-  return educativeAreas.includes(areaName) ? 'educativo' : 'juridico';
+  const educativeAreas = [
+    'Artigos comentados', 
+    'Artigos Comentados', 
+    'Dicas OAB', 
+    'Dicas para OAB',
+    'Artigos comentados',
+    'artigos comentados',
+    'ARTIGOS COMENTADOS'
+  ];
+  
+  return educativeAreas.some(area => 
+    areaName.toLowerCase().includes(area.toLowerCase())
+  ) ? 'educativo' : 'juridico';
 }
 
 // Get all themes for a specific area
@@ -293,13 +295,26 @@ export async function getFeaturedEpisodes(): Promise<PodcastEpisode[]> {
   });
 }
 
-// Get recent episodes
+// Get recent episodes - IMPROVED with date sorting
 export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
-  return getAllEpisodes().then(episodes => 
-    episodes
-      .sort((a, b) => (b.sequencia || '').localeCompare(a.sequencia || ''))
-      .slice(0, 6)
-  );
+  try {
+    const { data, error } = await supabase
+      .from('JURIFY')
+      .select('*')
+      .order('data_publicacao', { ascending: false, nullsLast: true })
+      .order('sequencia', { ascending: false })
+      .limit(20);
+    
+    if (error) {
+      console.error("Error fetching recent episodes:", error);
+      throw error;
+    }
+
+    return formatEpisodes(ensureTagsAreArrays(data || []));
+  } catch (error) {
+    console.error("Error in getRecentEpisodes:", error);
+    return [];
+  }
 }
 
 // Local storage for progress management
@@ -438,4 +453,3 @@ function formatEpisodes(episodes: SupabaseEpisode[]): PodcastEpisode[] {
     data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR'),
   }));
 }
-
