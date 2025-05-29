@@ -1,16 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { BookOpen, GraduationCap, Search, Filter, Grid, List } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import AreaCard from '@/components/podcast/AreaCard';
 import CategoryCard from '@/components/podcast/CategoryCard';
 import { getAllAreas } from '@/lib/podcast-service';
 import { AreaCard as AreaCardType } from '@/lib/types';
-import { BookOpen, GraduationCap, Grid3x3 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 const Categories = () => {
+  const [searchParams] = useSearchParams();
   const [areas, setAreas] = useState<AreaCardType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'juridico' | 'educativo'>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchAreas = async () => {
@@ -20,18 +27,32 @@ const Categories = () => {
       } catch (error) {
         console.error('Error fetching areas:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-    
     fetchAreas();
   }, []);
 
-  // Separate areas by category
+  // Handle direct navigation from category cards
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#areas-direito') {
+      setSelectedCategory('juridico');
+    } else if (hash === '#educacao-juridica') {
+      setSelectedCategory('educativo');
+    }
+  }, []);
+
+  // Filter areas based on search and category
+  const filteredAreas = areas.filter(area => {
+    const matchesSearch = area.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || area.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   const juridicoAreas = areas.filter(area => area.category === 'juridico');
   const educativoAreas = areas.filter(area => area.category === 'educativo');
-
-  // Calculate totals
+  
   const juridicoTotal = juridicoAreas.reduce((sum, area) => sum + area.episodeCount, 0);
   const educativoTotal = educativoAreas.reduce((sum, area) => sum + area.episodeCount, 0);
 
@@ -39,9 +60,7 @@ const Categories = () => {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
+      transition: { staggerChildren: 0.1 }
     }
   };
 
@@ -50,161 +69,180 @@ const Categories = () => {
     visible: { opacity: 1, y: 0 }
   };
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="space-y-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-juricast-card rounded w-1/3 mb-4"></div>
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="h-48 bg-juricast-card rounded-lg"></div>
-              <div className="h-48 bg-juricast-card rounded-lg"></div>
-            </div>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
   return (
     <MainLayout>
       <motion.div
-        className="space-y-10"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
+        className="space-y-8"
       >
         {/* Header */}
-        <motion.section variants={itemVariants}>
-          <div className="text-center space-y-4 mb-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="p-3 bg-gradient-to-r from-juricast-accent to-juricast-accent/80 rounded-xl">
-                <Grid3x3 className="w-8 h-8 text-white" />
-              </div>
-            </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-juricast-accent to-juricast-text bg-clip-text text-transparent">
-              Categorias
-            </h1>
-            <p className="text-juricast-muted text-lg max-w-2xl mx-auto">
-              Explore todo o conteúdo jurídico organizado por área de conhecimento e tipo de conteúdo
-            </p>
-          </div>
-        </motion.section>
+        <motion.div variants={itemVariants} className="text-center space-y-4">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-juricast-accent to-juricast-text bg-clip-text text-transparent">
+            Categorias
+          </h1>
+          <p className="text-juricast-muted text-lg max-w-3xl mx-auto">
+            Explore nosso conteúdo organizado por áreas de conhecimento. 
+            Encontre exatamente o que você precisa para sua carreira jurídica.
+          </p>
+        </motion.div>
 
         {/* Category Overview Cards */}
-        <motion.section variants={itemVariants}>
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
-            <CategoryCard
-              title="Áreas do Direito"
-              description="Conteúdo jurídico especializado dividido por áreas de atuação profissional"
-              episodeCount={juridicoTotal}
-              type="juridico"
-              href="#areas-direito"
-            />
-            <CategoryCard
-              title="Educação Jurídica"
-              description="Conteúdo educativo, dicas práticas e desenvolvimento profissional"
-              episodeCount={educativoTotal}
-              type="educativo"
-              href="#educacao-juridica"
-            />
-          </div>
-        </motion.section>
+        <motion.div variants={itemVariants} className="grid md:grid-cols-2 gap-6 mb-8">
+          <CategoryCard
+            title="Áreas do Direito"
+            description="Conteúdo jurídico especializado dividido por áreas de atuação profissional"
+            episodeCount={juridicoTotal}
+            type="juridico"
+            href="#areas-direito"
+          />
+          <CategoryCard
+            title="Educação Jurídica"
+            description="Conteúdo educativo, dicas práticas e desenvolvimento profissional"
+            episodeCount={educativoTotal}
+            type="educativo"
+            href="#educacao-juridica"
+          />
+        </motion.div>
 
-        {/* Áreas do Direito */}
-        {juridicoAreas.length > 0 && (
-          <motion.section id="areas-direito" variants={itemVariants}>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 bg-blue-600 rounded-lg">
-                <BookOpen className="w-6 h-6 text-white" />
+        {/* Search and Filters */}
+        <motion.div variants={itemVariants}>
+          <Card className="p-6 border-juricast-card/20 bg-juricast-card/50">
+            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+              {/* Search */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-juricast-muted" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar áreas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-juricast-background/50 border border-juricast-card/30 rounded-lg text-juricast-text placeholder:text-juricast-muted focus:outline-none focus:ring-2 focus:ring-juricast-accent/50 focus:border-juricast-accent"
+                />
               </div>
-              <div>
-                <h2 className="text-3xl font-bold text-juricast-text">
-                  Áreas do Direito
-                </h2>
-                <p className="text-juricast-muted">
-                  {juridicoTotal} episódios em {juridicoAreas.length} áreas especializadas
-                </p>
+
+              {/* Category Filter */}
+              <div className="flex items-center gap-2">
+                <Filter size={18} className="text-juricast-muted" />
+                <div className="flex bg-juricast-background/30 rounded-lg p-1">
+                  {[
+                    { value: 'all', label: 'Todas', icon: Filter },
+                    { value: 'juridico', label: 'Direito', icon: BookOpen },
+                    { value: 'educativo', label: 'Educação', icon: GraduationCap }
+                  ].map((category) => {
+                    const Icon = category.icon;
+                    return (
+                      <Button
+                        key={category.value}
+                        size="sm"
+                        variant={selectedCategory === category.value ? "default" : "ghost"}
+                        onClick={() => setSelectedCategory(category.value as any)}
+                        className={selectedCategory === category.value ? 
+                          "bg-juricast-accent text-white" : 
+                          "text-juricast-text hover:bg-juricast-card/50"
+                        }
+                      >
+                        <Icon size={16} className="mr-2" />
+                        {category.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* View Mode Toggle */}
+              <div className="flex bg-juricast-background/30 rounded-lg p-1">
+                <Button
+                  size="sm"
+                  variant={viewMode === 'grid' ? "default" : "ghost"}
+                  onClick={() => setViewMode('grid')}
+                  className={viewMode === 'grid' ? 
+                    "bg-juricast-accent text-white" : 
+                    "text-juricast-text hover:bg-juricast-card/50"
+                  }
+                >
+                  <Grid size={16} />
+                </Button>
+                <Button
+                  size="sm"
+                  variant={viewMode === 'list' ? "default" : "ghost"}
+                  onClick={() => setViewMode('list')}
+                  className={viewMode === 'list' ? 
+                    "bg-juricast-accent text-white" : 
+                    "text-juricast-text hover:bg-juricast-card/50"
+                  }
+                >
+                  <List size={16} />
+                </Button>
               </div>
             </div>
+          </Card>
+        </motion.div>
 
-            <motion.div
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-              variants={containerVariants}
-            >
-              {juridicoAreas.map((area) => (
-                <motion.div key={area.name} variants={itemVariants}>
+        {/* Areas Grid/List */}
+        <motion.div variants={itemVariants}>
+          {isLoading ? (
+            <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-juricast-card animate-pulse rounded-lg h-32" />
+              ))}
+            </div>
+          ) : filteredAreas.length > 0 ? (
+            <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-2'}`}>
+              {filteredAreas.map((area, index) => (
+                <motion.div
+                  key={area.name}
+                  variants={itemVariants}
+                  transition={{ delay: index * 0.05 }}
+                >
                   <AreaCard
                     name={area.name}
                     episodeCount={area.episodeCount}
                     slug={area.slug}
+                    category={area.category}
                   />
                 </motion.div>
               ))}
-            </motion.div>
-          </motion.section>
-        )}
+            </div>
+          ) : (
+            <Card className="p-8 text-center border-juricast-card/20">
+              <Search size={48} className="mx-auto text-juricast-muted mb-4" />
+              <h3 className="text-xl font-semibold text-juricast-text mb-2">
+                Nenhuma área encontrada
+              </h3>
+              <p className="text-juricast-muted">
+                Tente ajustar sua busca ou filtros para encontrar o conteúdo desejado.
+              </p>
+            </Card>
+          )}
+        </motion.div>
 
-        {/* Educação Jurídica */}
-        {educativoAreas.length > 0 && (
-          <motion.section id="educacao-juridica" variants={itemVariants}>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 bg-emerald-600 rounded-lg">
-                <GraduationCap className="w-6 h-6 text-white" />
+        {/* Quick Stats */}
+        <motion.div variants={itemVariants}>
+          <Card className="p-6 border-juricast-card/20 bg-gradient-to-r from-juricast-card/50 to-juricast-card/30">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold text-juricast-accent">{areas.length}</div>
+                <div className="text-sm text-juricast-muted">Total de Áreas</div>
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-juricast-text">
-                  Educação Jurídica
-                </h2>
-                <p className="text-juricast-muted">
-                  {educativoTotal} episódios em {educativoAreas.length} áreas educativas
-                </p>
+                <div className="text-2xl font-bold text-juricast-accent">{juridicoAreas.length}</div>
+                <div className="text-sm text-juricast-muted">Áreas Jurídicas</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-juricast-accent">{educativoAreas.length}</div>
+                <div className="text-sm text-juricast-muted">Áreas Educativas</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-juricast-accent">
+                  {areas.reduce((sum, area) => sum + area.episodeCount, 0)}
+                </div>
+                <div className="text-sm text-juricast-muted">Total de Episódios</div>
               </div>
             </div>
-
-            <motion.div
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-              variants={containerVariants}
-            >
-              {educativoAreas.map((area) => (
-                <motion.div key={area.name} variants={itemVariants}>
-                  <AreaCard
-                    name={area.name}
-                    episodeCount={area.episodeCount}
-                    slug={area.slug}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.section>
-        )}
-
-        {/* Statistics */}
-        <motion.section variants={itemVariants}>
-          <div className="bg-gradient-to-r from-juricast-card/50 to-juricast-card/30 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold mb-4">Total de Conteúdo</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <div className="text-3xl font-bold text-juricast-accent mb-2">
-                  {areas.length}
-                </div>
-                <div className="text-juricast-muted">Áreas Disponíveis</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-juricast-accent mb-2">
-                  {juridicoTotal + educativoTotal}
-                </div>
-                <div className="text-juricast-muted">Total de Episódios</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-juricast-accent mb-2">
-                  2
-                </div>
-                <div className="text-juricast-muted">Categorias Principais</div>
-              </div>
-            </div>
-          </div>
-        </motion.section>
+          </Card>
+        </motion.div>
       </motion.div>
     </MainLayout>
   );
