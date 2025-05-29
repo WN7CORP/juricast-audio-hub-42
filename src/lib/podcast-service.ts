@@ -1,5 +1,3 @@
-
-
 // Fix the formatEpisodes function at the bottom of the file to handle proper types
 
 import { supabase } from "@/integrations/supabase/client";
@@ -208,8 +206,74 @@ export async function getAllAreas(): Promise<AreaCard[]> {
 
 // Helper function to categorize areas
 function getCategoryForArea(areaName: string): 'juridico' | 'educativo' | 'pratico' {
-  const educativeAreas = ['Artigos comentados', 'Artigos Comentados', 'Dicas OAB', 'Dicas para OAB'];
-  return educativeAreas.includes(areaName) ? 'educativo' : 'juridico';
+  const educativeAreas = [
+    'Artigos comentados', 
+    'Artigos Comentados', 
+    'Dicas OAB', 
+    'Dicas para OAB',
+    'artigos comentados',
+    'artigos Comentados',
+    'dicas oab',
+    'dicas para oab'
+  ];
+  
+  // More flexible matching - check if any educative area is contained in the name
+  const isEducative = educativeAreas.some(educativeArea => 
+    areaName.toLowerCase().includes(educativeArea.toLowerCase()) ||
+    educativeArea.toLowerCase().includes(areaName.toLowerCase())
+  );
+  
+  return isEducative ? 'educativo' : 'juridico';
+}
+
+// Enhanced debug function for areas
+export async function debugAreas(): Promise<void> {
+  try {
+    console.log('=== DEBUG: Starting area analysis ===');
+    
+    const { data, error } = await supabase
+      .from('JURIFY')
+      .select('area, tema, titulo, id');
+    
+    if (error) {
+      console.error("Debug error:", error);
+      return;
+    }
+
+    console.log(`Total episodes found: ${data?.length || 0}`);
+    
+    const areasMap = new Map<string, { count: number, episodes: any[] }>();
+    
+    data?.forEach(episode => {
+      if (episode.area) {
+        const current = areasMap.get(episode.area) || { count: 0, episodes: [] };
+        areasMap.set(episode.area, {
+          count: current.count + 1,
+          episodes: [...current.episodes, episode]
+        });
+      }
+    });
+    
+    console.log('=== Areas found ===');
+    Array.from(areasMap.entries()).forEach(([area, info]) => {
+      const category = getCategoryForArea(area);
+      console.log(`${area}: ${info.count} episodes (Category: ${category})`);
+      
+      // Show first few episodes for each area
+      console.log('  Sample episodes:', info.episodes.slice(0, 3).map(ep => ep.titulo));
+    });
+    
+    console.log('=== Areas by category ===');
+    const juridico = Array.from(areasMap.keys()).filter(area => getCategoryForArea(area) === 'juridico');
+    const educativo = Array.from(areasMap.keys()).filter(area => getCategoryForArea(area) === 'educativo');
+    
+    console.log('Juridico areas:', juridico);
+    console.log('Educativo areas:', educativo);
+    
+    console.log('=== DEBUG: Area analysis complete ===');
+  } catch (error) {
+    console.error("Error in debugAreas:", error);
+  }
 }
 
 // Get all themes for a specific area
@@ -438,4 +502,3 @@ function formatEpisodes(episodes: SupabaseEpisode[]): PodcastEpisode[] {
     data_publicacao: episode.data_publicacao || new Date().toLocaleDateString('pt-BR'),
   }));
 }
-
