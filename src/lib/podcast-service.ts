@@ -1,4 +1,3 @@
-
 // Fix the formatEpisodes function at the bottom of the file to handle proper types
 
 import { supabase } from "@/integrations/supabase/client";
@@ -157,7 +156,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
   }
 }
 
-// Get all unique areas with episode counts
+// Get all unique areas with episode counts and categorization
 export async function getAllAreas(): Promise<AreaCard[]> {
   try {
     const { data, error } = await supabase
@@ -179,20 +178,33 @@ export async function getAllAreas(): Promise<AreaCard[]> {
       }
     });
     
-    // Convert to array of area cards
+    // Convert to array of area cards with categorization
     const areas: AreaCard[] = Array.from(areasMap.entries()).map(([name, count], index) => ({
-      id: index + 1, // Generate ID based on index
+      id: index + 1,
       name,
       episodeCount: count,
       slug: name.toLowerCase().replace(/\s+/g, '-'),
-      image: getAreaImage(name)
+      image: getAreaImage(name),
+      category: getCategoryForArea(name)
     }));
     
-    return areas.sort((a, b) => a.name.localeCompare(b.name));
+    return areas.sort((a, b) => {
+      // Sort by category first (juridico first), then by name
+      if (a.category !== b.category) {
+        return a.category === 'juridico' ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
   } catch (error) {
     console.error("Error in getAllAreas:", error);
     return [];
   }
+}
+
+// Helper function to categorize areas
+function getCategoryForArea(areaName: string): 'juridico' | 'educativo' {
+  const educativeAreas = ['Artigos comentados', 'Dicas OAB'];
+  return educativeAreas.includes(areaName) ? 'educativo' : 'juridico';
 }
 
 // Get all themes for a specific area

@@ -33,6 +33,7 @@ export interface AreaCard {
   slug: string;
   image?: string;
   episodeCount?: number;
+  category?: 'juridico' | 'educativo';
 }
 
 export interface ThemeCard {
