@@ -110,30 +110,17 @@ const Index = () => {
               </Link>
             </motion.div>
             
-            <motion.div className="space-y-3" variants={containerVariants}>
-              {loadingInProgress ? [...Array(2)].map((_, i) => <div key={i} className="bg-juricast-card animate-pulse rounded-lg h-16"></div>) : inProgressEpisodes.slice(0, 3).map((episode, index) => <PlaylistItem key={episode.id} episode={episode} index={index + 1} />)}
-            </motion.div>
+            
           </motion.section>}
 
         {/* Enhanced Category Cards */}
         <motion.section variants={itemVariants}>
           <motion.div className="text-center space-y-4 mb-8" variants={sectionHeaderVariants}>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-juricast-accent to-juricast-text bg-clip-text text-transparent">
-              Explore por Categoria
-            </h2>
-            <p className="text-juricast-muted text-lg max-w-2xl mx-auto">
-              Descubra conteúdo jurídico especializado organizado por área de conhecimento
-            </p>
+            
+            
           </motion.div>
 
-          <motion.div className="grid md:grid-cols-2 gap-6 mb-8" variants={containerVariants}>
-            <motion.div variants={itemVariants}>
-              <CategoryCard title="Áreas do Direito" description="Conteúdo jurídico especializado dividido por áreas de atuação profissional" episodeCount={juridicoTotal} type="juridico" href="#areas-direito" />
-            </motion.div>
-            <motion.div variants={itemVariants}>
-              <CategoryCard title="Educação Jurídica" description="Conteúdo educativo, dicas práticas e desenvolvimento profissional" episodeCount={educativoTotal} type="educativo" href="#educacao-juridica" />
-            </motion.div>
-          </motion.div>
+          
         </motion.section>
 
         {/* Focused Mode Section */}
