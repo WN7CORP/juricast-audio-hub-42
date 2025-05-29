@@ -25,13 +25,41 @@ export function getUserIP() {
   return localStorage.getItem(USER_IP_KEY) || 'anonymous';
 }
 
+// IMPROVED: Better slug generation that preserves accents
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-áàâãéèêíìîóòôõúùûç]/g, '') // Keep accents and ç
+    .replace(/--+/g, '-')
+    .trim();
+}
+
+// IMPROVED: Convert slug back to proper name format
+function normalizeAreaName(area: string): string {
+  // Handle slug format (direito-medico -> Direito Médico)
+  if (area.includes('-')) {
+    return area
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
+      .replace(/medico/i, 'Médico')
+      .replace(/filosofia/i, 'Filosofia')
+      .replace(/tributario/i, 'Tributário')
+      .replace(/penal/i, 'Penal')
+      .replace(/constitucional/i, 'Constitucional');
+  }
+  return area;
+}
+
 // Get all podcast episodes from JURIFY table
 export async function getAllEpisodes(): Promise<PodcastEpisode[]> {
   try {
     const { data, error } = await supabase
       .from('JURIFY')
       .select('*')
-      .order('sequencia', { ascending: true });
+      .order('data_publicacao', { ascending: false })
+      .order('sequencia', { ascending: false });
     
     if (error) {
       console.error("Error fetching episodes:", error);
@@ -53,89 +81,107 @@ function ensureTagsAreArrays(episodes: any[]): SupabaseEpisode[] {
   }));
 }
 
-// Get episodes by area (category) - IMPROVED
+// IMPROVED: Get episodes by area with flexible search
 export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]> {
   try {
     if (!area) return [];
     
-    console.log("Searching for area:", area);
+    console.log("🔍 Searching for area:", area);
     
-    // First, try exact match
-    let { data, error } = await supabase
-      .from('JURIFY')
-      .select('*')
-      .ilike('area', area)
-      .order('sequencia', { ascending: true });
+    // Convert slug to proper name format
+    const normalizedArea = normalizeAreaName(area);
+    console.log("🔄 Normalized area:", normalizedArea);
     
-    // If no exact match, try with spaces and variations
-    if (!data?.length) {
-      const areaVariations = [
-        area.replace(/-/g, ' '),
-        area.replace(/[-_]/g, ' '),
-        area.charAt(0).toUpperCase() + area.slice(1).replace(/-/g, ' '),
-        area.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-      ];
+    // Multiple search strategies
+    const searchTerms = [
+      area,
+      normalizedArea,
+      area.replace(/-/g, ' '),
+      area.replace(/[-_]/g, ' '),
+      area.charAt(0).toUpperCase() + area.slice(1).replace(/-/g, ' '),
+      area.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    ];
+    
+    // Add specific mappings for known problematic areas
+    const areaMapping: Record<string, string[]> = {
+      'direito-medico': ['Direito Médico', 'Direito Mdico'],
+      'direito-do-trabalho': ['Direito do Trabalho', 'Direito Trabalhista'],
+      'filosofia-do-direito': ['Filosofia do Direito', 'Filosofia Jurídica'],
+      'direito-tributario': ['Direito Tributário', 'Direito Fiscal'],
+      'direito-penal': ['Direito Penal', 'Criminal'],
+      'direito-constitucional': ['Direito Constitucional', 'Constitucional']
+    };
+    
+    if (areaMapping[area]) {
+      searchTerms.push(...areaMapping[area]);
+    }
+    
+    console.log("🎯 Search terms:", searchTerms);
+    
+    let foundEpisodes: any[] = [];
+    
+    // Try each search term until we find results
+    for (const searchTerm of searchTerms) {
+      console.log(`🔍 Trying search term: "${searchTerm}"`);
       
-      for (const variation of areaVariations) {
-        const result = await supabase
-          .from('JURIFY')
-          .select('*')
-          .ilike('area', `%${variation}%`)
-          .order('sequencia', { ascending: true });
-        
-        if (result.data?.length) {
-          data = result.data;
-          error = result.error;
-          break;
-        }
+      const { data, error } = await supabase
+        .from('JURIFY')
+        .select('*')
+        .ilike('area', `%${searchTerm}%`)
+        .order('data_publicacao', { ascending: false })
+        .order('sequencia', { ascending: false });
+      
+      if (error) {
+        console.error(`❌ Error searching for "${searchTerm}":`, error);
+        continue;
+      }
+      
+      if (data && data.length > 0) {
+        console.log(`✅ Found ${data.length} episodes for "${searchTerm}"`);
+        foundEpisodes = data;
+        break;
+      } else {
+        console.log(`❌ No episodes found for "${searchTerm}"`);
       }
     }
     
-    if (error) {
-      console.error(`Error fetching episodes for area ${area}:`, error);
-      throw error;
-    }
-
-    console.log(`Found ${data?.length || 0} episodes for area ${area}`);
-    return formatEpisodes(ensureTagsAreArrays(data || []));
+    console.log(`📊 Total episodes found for area ${area}:`, foundEpisodes.length);
+    return formatEpisodes(ensureTagsAreArrays(foundEpisodes));
   } catch (error) {
-    console.error(`Error in getEpisodesByArea for ${area}:`, error);
+    console.error(`❌ Error in getEpisodesByArea for ${area}:`, error);
     return [];
   }
 }
 
-// Get episodes by theme
+// IMPROVED: Get episodes by theme with flexible search
 export async function getEpisodesByTheme(theme: string, area: string): Promise<PodcastEpisode[]> {
   try {
-    // Format the theme string to match how it might be stored in the database
-    const formattedTheme = theme
+    const normalizedTheme = theme
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
 
-    const formattedArea = area
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
+    const normalizedArea = normalizeAreaName(area);
     
-    console.log("Searching for theme:", formattedTheme, "in area:", formattedArea);
+    console.log("🔍 Searching for theme:", normalizedTheme, "in area:", normalizedArea);
     
     const { data, error } = await supabase
       .from('JURIFY')
       .select('*')
-      .ilike('tema', `%${formattedTheme}%`)
-      .ilike('area', `%${formattedArea}%`)
-      .order('sequencia', { ascending: true });
+      .ilike('tema', `%${normalizedTheme}%`)
+      .ilike('area', `%${normalizedArea}%`)
+      .order('data_publicacao', { ascending: false })
+      .order('sequencia', { ascending: false });
     
     if (error) {
-      console.error(`Error fetching episodes for theme ${theme}:`, error);
+      console.error(`❌ Error fetching episodes for theme ${theme}:`, error);
       throw error;
     }
 
-    console.log(`Found ${data?.length || 0} episodes for theme ${formattedTheme}`);
+    console.log(`📊 Found ${data?.length || 0} episodes for theme ${normalizedTheme}`);
     return formatEpisodes(ensureTagsAreArrays(data || []));
   } catch (error) {
-    console.error(`Error in getEpisodesByTheme for ${theme}:`, error);
+    console.error(`❌ Error in getEpisodesByTheme for ${theme}:`, error);
     return [];
   }
 }
@@ -150,7 +196,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
       .single();
     
     if (error) {
-      console.error(`Error fetching episode with id ${id}:`, error);
+      console.error(`❌ Error fetching episode with id ${id}:`, error);
       throw error;
     }
 
@@ -169,12 +215,12 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
     
     return episode;
   } catch (error) {
-    console.error(`Error in getEpisodeById for ${id}:`, error);
+    console.error(`❌ Error in getEpisodeById for ${id}:`, error);
     return null;
   }
 }
 
-// Get all unique areas with episode counts and categorization - IMPROVED
+// IMPROVED: Get all unique areas with proper slug generation
 export async function getAllAreas(): Promise<AreaCard[]> {
   try {
     const { data, error } = await supabase
@@ -182,7 +228,7 @@ export async function getAllAreas(): Promise<AreaCard[]> {
       .select('area');
     
     if (error) {
-      console.error("Error fetching areas:", error);
+      console.error("❌ Error fetching areas:", error);
       throw error;
     }
 
@@ -196,12 +242,14 @@ export async function getAllAreas(): Promise<AreaCard[]> {
       }
     });
     
-    // Convert to array of area cards with categorization
+    console.log("📊 Areas found:", Array.from(areasMap.keys()));
+    
+    // Convert to array of area cards with proper categorization
     const areas: AreaCard[] = Array.from(areasMap.entries()).map(([name, count], index) => ({
       id: index + 1,
       name,
       episodeCount: count,
-      slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      slug: generateSlug(name), // Use improved slug generation
       image: getAreaImage(name),
       category: getCategoryForArea(name)
     }));
@@ -217,43 +265,41 @@ export async function getAllAreas(): Promise<AreaCard[]> {
       return a.name.localeCompare(b.name);
     });
   } catch (error) {
-    console.error("Error in getAllAreas:", error);
+    console.error("❌ Error in getAllAreas:", error);
     return [];
   }
 }
 
-// Helper function to categorize areas - IMPROVED
+// IMPROVED: Helper function to categorize areas
 function getCategoryForArea(areaName: string): 'juridico' | 'educativo' | 'pratico' {
-  const educativeAreas = [
-    'Artigos comentados', 
-    'Artigos Comentados', 
-    'Dicas OAB', 
-    'Dicas para OAB',
-    'Artigos comentados',
-    'artigos comentados',
-    'ARTIGOS COMENTADOS'
+  const educativeKeywords = [
+    'artigos comentados', 
+    'dicas oab', 
+    'dicas para oab',
+    'educação',
+    'ensino',
+    'aprendizagem'
   ];
   
-  return educativeAreas.some(area => 
-    areaName.toLowerCase().includes(area.toLowerCase())
+  const lowerAreaName = areaName.toLowerCase();
+  return educativeKeywords.some(keyword => 
+    lowerAreaName.includes(keyword)
   ) ? 'educativo' : 'juridico';
 }
 
-// Get all themes for a specific area
+// IMPROVED: Get all themes for a specific area with flexible search
 export async function getThemesByArea(area: string): Promise<ThemeCard[]> {
   try {
-    const formattedArea = area
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
+    const normalizedArea = normalizeAreaName(area);
+    console.log("🔍 Getting themes for area:", normalizedArea);
     
     const { data, error } = await supabase
       .from('JURIFY')
       .select('tema, area')
-      .eq('area', formattedArea);
+      .ilike('area', `%${normalizedArea}%`);
     
     if (error) {
-      console.error(`Error fetching themes for area ${area}:`, error);
+      console.error(`❌ Error fetching themes for area ${area}:`, error);
       throw error;
     }
 
@@ -270,32 +316,32 @@ export async function getThemesByArea(area: string): Promise<ThemeCard[]> {
       }
     });
     
+    console.log(`📊 Found ${themesMap.size} themes for area ${normalizedArea}`);
+    
     // Convert to array of theme cards
     const themes: ThemeCard[] = Array.from(themesMap.entries()).map(([name, info]) => ({
       name,
       episodeCount: info.count,
-      slug: name.toLowerCase().replace(/\s+/g, '-'),
-      area: formattedArea,
+      slug: generateSlug(name),
+      area: normalizedArea,
       image: getThemeImage(name)
     }));
     
     return themes.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
-    console.error(`Error in getThemesByArea for ${area}:`, error);
+    console.error(`❌ Error in getThemesByArea for ${area}:`, error);
     return [];
   }
 }
 
 // Helper function to get representative image for an area
 function getAreaImage(areaName: string): string {
-  // Try to find an episode with this area to use its image
-  return '/placeholder.svg'; // Fallback to placeholder
+  return '/placeholder.svg';
 }
 
 // Helper function to get representative image for a theme
 function getThemeImage(themeName: string): string {
-  // Try to find an episode with this theme to use its image
-  return '/placeholder.svg'; // Fallback to placeholder
+  return '/placeholder.svg';
 }
 
 // Get featured episodes (most recent from each area)
@@ -313,14 +359,20 @@ export async function getFeaturedEpisodes(): Promise<PodcastEpisode[]> {
     // Get the most recent episode from each area
     const featuredEpisodes = Object.values(episodesByArea)
       .map(areaEpisodes => areaEpisodes[0])
-      .sort((a, b) => (b.sequencia || '').localeCompare(a.sequencia || ''))
+      .sort((a, b) => {
+        // Sort by date first, then by sequencia
+        if (a.data_publicacao && b.data_publicacao) {
+          return new Date(b.data_publicacao).getTime() - new Date(a.data_publicacao).getTime();
+        }
+        return (b.sequencia || '').localeCompare(a.sequencia || '');
+      })
       .slice(0, 6);
       
     return featuredEpisodes;
   });
 }
 
-// Get recent episodes - IMPROVED with date sorting
+// IMPROVED: Get recent episodes with proper date sorting
 export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
   try {
     const { data, error } = await supabase
@@ -331,13 +383,14 @@ export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
       .limit(20);
     
     if (error) {
-      console.error("Error fetching recent episodes:", error);
+      console.error("❌ Error fetching recent episodes:", error);
       throw error;
     }
 
+    console.log(`📊 Found ${data?.length || 0} recent episodes`);
     return formatEpisodes(ensureTagsAreArrays(data || []));
   } catch (error) {
-    console.error("Error in getRecentEpisodes:", error);
+    console.error("❌ Error in getRecentEpisodes:", error);
     return [];
   }
 }
