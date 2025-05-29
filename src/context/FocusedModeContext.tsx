@@ -9,8 +9,8 @@ interface FocusedModeContextType {
   autoPlayNext: boolean;
   enableFocusedMode: (playlist: PodcastEpisode[], startIndex?: number) => void;
   disableFocusedMode: () => void;
-  goToNextEpisode: () => void;
-  goToPreviousEpisode: () => void;
+  goToNextEpisode: () => boolean;
+  goToPreviousEpisode: () => boolean;
   setAutoPlayNext: (enabled: boolean) => void;
   addToPlaylist: (episode: PodcastEpisode) => void;
   removeFromPlaylist: (episodeId: number) => void;
@@ -45,7 +45,7 @@ export const FocusedModeProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setCurrentEpisodeIndex(0);
   }, []);
 
-  const goToNextEpisode = useCallback(() => {
+  const goToNextEpisode = useCallback((): boolean => {
     if (currentEpisodeIndex < currentPlaylist.length - 1) {
       setCurrentEpisodeIndex(prev => prev + 1);
       return true;
@@ -53,7 +53,7 @@ export const FocusedModeProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return false;
   }, [currentEpisodeIndex, currentPlaylist.length]);
 
-  const goToPreviousEpisode = useCallback(() => {
+  const goToPreviousEpisode = useCallback((): boolean => {
     if (currentEpisodeIndex > 0) {
       setCurrentEpisodeIndex(prev => prev - 1);
       return true;
