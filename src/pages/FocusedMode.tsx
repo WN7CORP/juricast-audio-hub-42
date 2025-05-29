@@ -273,7 +273,7 @@ const FocusedMode = () => {
       opacity: 0
     }} animate={{
       opacity: 1
-    }} className="max-w-4xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 pb-20">
+    }} className="max-w-4xl mx-auto space-y-6 sm:px-6 lg:px-8 pb-20 px-[2px]">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
