@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
@@ -159,7 +160,6 @@ const FocusedMode = () => {
               initial="hidden"
               animate="visible"
             >
-              {/* ... keep existing code (category cards) */}
               <motion.div variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}>
                 <Card
                   className="p-4 sm:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 border-juricast-card/20 bg-gradient-to-br from-blue-50/10 to-blue-100/10"
@@ -310,7 +310,7 @@ const FocusedMode = () => {
                         Escolha um tema específico
                       </div>
                     </div>
-                  </div>
+                  </Button>
                 </div>
               </Card>
 
