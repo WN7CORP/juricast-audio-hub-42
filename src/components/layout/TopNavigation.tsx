@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Home, Heart, Clock, List, Check, BookOpen, GraduationCap } from 'lucide-react';
@@ -44,17 +43,17 @@ const TopNavigation = () => {
     fetchEpisodes();
   }, []);
 
-  // Handle search with real-time results
+  // Handle search with real-time results - with null safety
   useEffect(() => {
     if (searchQuery.trim() && allEpisodes.length > 0) {
       const query = searchQuery.toLowerCase();
       const filtered = allEpisodes.filter(episode => {
         return (
-          episode.titulo.toLowerCase().includes(query) ||
-          episode.descricao.toLowerCase().includes(query) ||
-          episode.area.toLowerCase().includes(query) ||
-          episode.tema.toLowerCase().includes(query) ||
-          (episode.tag && episode.tag.some(tag => tag.toLowerCase().includes(query)))
+          (episode.titulo && episode.titulo.toLowerCase().includes(query)) ||
+          (episode.descricao && episode.descricao.toLowerCase().includes(query)) ||
+          (episode.area && episode.area.toLowerCase().includes(query)) ||
+          (episode.tema && episode.tema.toLowerCase().includes(query)) ||
+          (episode.tag && Array.isArray(episode.tag) && episode.tag.some(tag => tag && tag.toLowerCase().includes(query)))
         );
       }).slice(0, 10); // Limit to 10 results for performance
       
@@ -182,18 +181,18 @@ const TopNavigation = () => {
                 {searchResults.map((episode) => (
                   <CommandItem
                     key={episode.id}
-                    value={episode.titulo}
+                    value={episode.titulo || ''}
                     onSelect={() => handleEpisodeSelect(episode.id)}
                     className="flex items-center gap-3 p-3 cursor-pointer"
                   >
                     <img
                       src={episode.imagem_miniatura}
-                      alt={episode.titulo}
+                      alt={episode.titulo || 'Episódio'}
                       className="w-10 h-10 rounded object-cover"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{episode.titulo}</p>
-                      <p className="text-xs text-juricast-muted">{episode.area}</p>
+                      <p className="font-medium text-sm truncate">{episode.titulo || 'Título não disponível'}</p>
+                      <p className="text-xs text-juricast-muted">{episode.area || 'Área não especificada'}</p>
                     </div>
                   </CommandItem>
                 ))}
