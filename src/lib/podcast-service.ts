@@ -1,3 +1,5 @@
+// Fix the formatEpisodes function at the bottom of the file to handle proper types
+
 import { supabase } from "@/integrations/supabase/client";
 import { PodcastEpisode, UserProgress, UserFavorite, AreaCard, ThemeCard, SupabaseEpisode } from "./types";
 
@@ -23,7 +25,7 @@ export function getUserIP() {
   return localStorage.getItem(USER_IP_KEY) || 'anonymous';
 }
 
-// Get all podcast episodes from JURIFY table - OPTIMIZED with better ordering
+// Get all podcast episodes from JURIFY table
 export async function getAllEpisodes(): Promise<PodcastEpisode[]> {
   try {
     const { data, error } = await supabase
@@ -51,13 +53,14 @@ function ensureTagsAreArrays(episodes: any[]): SupabaseEpisode[] {
   }));
 }
 
-// Get episodes by area (category) - IMPROVED with better ordering
+// Get episodes by area (category) - FIXED
 export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]> {
   try {
     if (!area) return [];
     
     console.log("🔍 Searching for area:", area);
     
+    // Convert slug back to possible area names
     const areaVariations = [
       area,
       area.replace(/-/g, ' '),
@@ -73,48 +76,27 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
       area === 'processo-penal' ? 'Processo Penal' : '',
       area === 'processo-civil' ? 'Processo Civil' : '',
       area === 'dicas-oab' ? 'Dicas OAB' : '',
-      area === 'artigos-comentados' ? 'Artigos Comentados' : '',
-      area === 'juridico' ? '' : '',
-      // Additional variations for problematic cases
-      area.includes('juridico') ? 'Direito' : '',
-      area.includes('juridico') ? 'Civil' : '',
-      area.includes('juridico') ? 'Penal' : '',
-      area.includes('juridico') ? 'Constitucional' : ''
+      area === 'artigos-comentados' ? 'Artigos Comentados' : ''
     ].filter(Boolean);
     
     let data = null;
     let error = null;
     
-    // If searching for "juridico", get all legal areas
-    if (area === 'juridico' || area.includes('juridico')) {
-      console.log("🏛️ Searching for all juridical areas");
+    // Try each variation using ILIKE for flexible matching
+    for (const variation of areaVariations) {
+      console.log("🔍 Trying variation:", variation);
       
       const result = await supabase
         .from('JURIFY')
         .select('*')
-        .not('area', 'ilike', '%artigos comentados%')
-        .not('area', 'ilike', '%dicas oab%')
-        .order('sequencia', { ascending: true }); // FIXED: Order by sequencia
+        .ilike('area', `%${variation}%`)
+        .order('data', { ascending: false });
       
-      data = result.data;
-      error = result.error;
-    } else {
-      // Try each variation using ILIKE for flexible matching
-      for (const variation of areaVariations) {
-        console.log("🔍 Trying variation:", variation);
-        
-        const result = await supabase
-          .from('JURIFY')
-          .select('*')
-          .ilike('area', `%${variation}%`)
-          .order('sequencia', { ascending: true }); // FIXED: Order by sequencia
-        
-        if (result.data?.length) {
-          data = result.data;
-          error = result.error;
-          console.log(`✅ Found ${data.length} episodes for variation: ${variation}`);
-          break;
-        }
+      if (result.data?.length) {
+        data = result.data;
+        error = result.error;
+        console.log(`✅ Found ${data.length} episodes for variation: ${variation}`);
+        break;
       }
     }
     
@@ -131,9 +113,10 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
   }
 }
 
-// Get episodes by theme - IMPROVED with sequencia ordering
+// Get episodes by theme
 export async function getEpisodesByTheme(theme: string, area: string): Promise<PodcastEpisode[]> {
   try {
+    // Format the theme string to match how it might be stored in the database
     const formattedTheme = theme
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -151,7 +134,7 @@ export async function getEpisodesByTheme(theme: string, area: string): Promise<P
       .select('*')
       .ilike('tema', `%${formattedTheme}%`)
       .ilike('area', `%${formattedArea}%`)
-      .order('sequencia', { ascending: true }); // FIXED: Order by sequencia
+      .order('sequencia', { ascending: true });
     
     if (error) {
       console.error(`Error fetching episodes for theme ${theme}:`, error);
@@ -389,14 +372,13 @@ export async function getFeaturedEpisodes(): Promise<PodcastEpisode[]> {
   });
 }
 
-// Get recent episodes - IMPROVED with date sorting and sequencia fallback
+// Get recent episodes - IMPROVED with date sorting
 export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
   try {
     const { data, error } = await supabase
       .from('JURIFY')
       .select('*')
       .order('data', { ascending: false })
-      .order('sequencia', { ascending: false }) // IMPROVED: Fallback to sequencia
       .limit(20);
     
     if (error) {
@@ -407,28 +389,6 @@ export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
     return formatEpisodes(ensureTagsAreArrays(data || []));
   } catch (error) {
     console.error("Error in getRecentEpisodes:", error);
-    return [];
-  }
-}
-
-// Get popular episodes - NEW function
-export async function getPopularEpisodes(): Promise<PodcastEpisode[]> {
-  try {
-    const { data, error } = await supabase
-      .from('JURIFY')
-      .select('*')
-      .order('curtidas', { ascending: false })
-      .order('sequencia', { ascending: true })
-      .limit(20);
-    
-    if (error) {
-      console.error("Error fetching popular episodes:", error);
-      throw error;
-    }
-
-    return formatEpisodes(ensureTagsAreArrays(data || []));
-  } catch (error) {
-    console.error("Error in getPopularEpisodes:", error);
     return [];
   }
 }
@@ -535,70 +495,6 @@ export function getFavoriteEpisodes(): Promise<PodcastEpisode[]> {
   } catch (error) {
     console.error("Error getting favorite episodes:", error);
     return Promise.resolve([]);
-  }
-}
-
-// Get favorite episodes grouped by area - NEW function for organized favorites
-export function getFavoriteEpisodesByArea(): Promise<Record<string, PodcastEpisode[]>> {
-  try {
-    const favoritesData = getFavoritesData();
-    const favoriteIds = Object.keys(favoritesData)
-      .map(Number)
-      .filter(id => favoritesData[id].isFavorite);
-    
-    return getAllEpisodes().then(episodes => {
-      const favoriteEpisodes = episodes.filter(episode => favoriteIds.includes(episode.id));
-      
-      // Group by area
-      const grouped = favoriteEpisodes.reduce<Record<string, PodcastEpisode[]>>((acc, episode) => {
-        if (!acc[episode.area]) {
-          acc[episode.area] = [];
-        }
-        acc[episode.area].push(episode);
-        return acc;
-      }, {});
-      
-      // Sort episodes within each area by sequencia
-      Object.keys(grouped).forEach(area => {
-        grouped[area].sort((a, b) => (a.sequencia || '').localeCompare(b.sequencia || ''));
-      });
-      
-      return grouped;
-    });
-  } catch (error) {
-    console.error("Error getting favorite episodes by area:", error);
-    return Promise.resolve({});
-  }
-}
-
-// Search episodes with relevance scoring - NEW function
-export async function searchEpisodes(query: string): Promise<PodcastEpisode[]> {
-  try {
-    if (!query.trim()) return [];
-    
-    const { data, error } = await supabase
-      .from('JURIFY')
-      .select('*')
-      .or(`titulo.ilike.%${query}%,descricao.ilike.%${query}%,area.ilike.%${query}%,tema.ilike.%${query}%`)
-      .order('sequencia', { ascending: true });
-    
-    if (error) {
-      console.error("Error searching episodes:", error);
-      throw error;
-    }
-
-    const formattedEpisodes = formatEpisodes(ensureTagsAreArrays(data || []));
-    
-    // Score results by relevance (title matches score higher)
-    return formattedEpisodes.sort((a, b) => {
-      const queryLower = query.toLowerCase();
-      const aScore = a.titulo.toLowerCase().includes(queryLower) ? 2 : 1;
-      const bScore = b.titulo.toLowerCase().includes(queryLower) ? 2 : 1;
-      return bScore - aScore;
-    });
-  } catch (error) {
-    console.error("Error in searchEpisodes:", error);
-    return [];
   }
 }
 
