@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -41,6 +42,7 @@ const PodcastDetails = () => {
   useEffect(() => {
     saveUserIP();
   }, []);
+  
   useEffect(() => {
     if (episode) {
       setIsFavorite(episode.favorito || false);
@@ -163,7 +165,7 @@ const PodcastDetails = () => {
           />
           
           {/* Support Content Button */}
-          <SupportContent description={episode.descricao || ''} />
+          <SupportContent description={episode.descricao || ''} episode={episode} />
           
           {/* Episode Details */}
           <motion.div

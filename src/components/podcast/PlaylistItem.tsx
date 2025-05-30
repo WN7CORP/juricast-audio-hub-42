@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Heart, Pause, Scale, Book, File, Check, Clock } from 'lucide-react';
 import { PodcastEpisode } from '@/lib/types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toggleFavorite } from '@/lib/podcast-service';
 import { useQueryClient } from '@tanstack/react-query';
@@ -145,18 +145,29 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
                 )}
               </button>
 
-              <button
+              <motion.button
                 onClick={handleToggleFavorite}
                 className="p-2 rounded-full hover:bg-juricast-accent/10 transition-colors"
                 aria-label="Toggle favorite"
+                whileTap={{ scale: 0.9 }}
               >
-                <Heart 
-                  className={cn(
-                    "w-4 h-4 transition-colors",
-                    episode.favorito ? "fill-red-500 text-red-500" : "text-juricast-muted"
-                  )}
-                />
-              </button>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={episode.favorito ? 'filled' : 'empty'}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Heart 
+                      className={cn(
+                        "w-4 h-4 transition-colors",
+                        episode.favorito ? "fill-red-500 text-red-500" : "text-juricast-muted"
+                      )}
+                    />
+                  </motion.div>
+                </AnimatePresence>
+              </motion.button>
             </div>
           </div>
         </div>

@@ -1,5 +1,3 @@
-// Fix the formatEpisodes function at the bottom of the file to handle proper types
-
 import { supabase } from "@/integrations/supabase/client";
 import { PodcastEpisode, UserProgress, UserFavorite, AreaCard, ThemeCard, SupabaseEpisode } from "./types";
 
@@ -53,14 +51,14 @@ function ensureTagsAreArrays(episodes: any[]): SupabaseEpisode[] {
   }));
 }
 
-// Get episodes by area (category) - FIXED
+// Get episodes by area (category) - IMPROVED with better matching
 export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]> {
   try {
     if (!area) return [];
     
     console.log("🔍 Searching for area:", area);
     
-    // Convert slug back to possible area names
+    // Convert slug back to possible area names with better matching
     const areaVariations = [
       area,
       area.replace(/-/g, ' '),
@@ -76,27 +74,48 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
       area === 'processo-penal' ? 'Processo Penal' : '',
       area === 'processo-civil' ? 'Processo Civil' : '',
       area === 'dicas-oab' ? 'Dicas OAB' : '',
-      area === 'artigos-comentados' ? 'Artigos Comentados' : ''
+      area === 'artigos-comentados' ? 'Artigos Comentados' : '',
+      area === 'juridico' ? '' : '', // Special case for "Jurídico" category
+      // Additional variations for problematic cases
+      area.includes('juridico') ? 'Direito' : '',
+      area.includes('juridico') ? 'Civil' : '',
+      area.includes('juridico') ? 'Penal' : '',
+      area.includes('juridico') ? 'Constitucional' : ''
     ].filter(Boolean);
     
     let data = null;
     let error = null;
     
-    // Try each variation using ILIKE for flexible matching
-    for (const variation of areaVariations) {
-      console.log("🔍 Trying variation:", variation);
+    // If searching for "juridico", get all legal areas
+    if (area === 'juridico' || area.includes('juridico')) {
+      console.log("🏛️ Searching for all juridical areas");
       
       const result = await supabase
         .from('JURIFY')
         .select('*')
-        .ilike('area', `%${variation}%`)
+        .not('area', 'ilike', '%artigos comentados%')
+        .not('area', 'ilike', '%dicas oab%')
         .order('data', { ascending: false });
       
-      if (result.data?.length) {
-        data = result.data;
-        error = result.error;
-        console.log(`✅ Found ${data.length} episodes for variation: ${variation}`);
-        break;
+      data = result.data;
+      error = result.error;
+    } else {
+      // Try each variation using ILIKE for flexible matching
+      for (const variation of areaVariations) {
+        console.log("🔍 Trying variation:", variation);
+        
+        const result = await supabase
+          .from('JURIFY')
+          .select('*')
+          .ilike('area', `%${variation}%`)
+          .order('data', { ascending: false });
+        
+        if (result.data?.length) {
+          data = result.data;
+          error = result.error;
+          console.log(`✅ Found ${data.length} episodes for variation: ${variation}`);
+          break;
+        }
       }
     }
     
