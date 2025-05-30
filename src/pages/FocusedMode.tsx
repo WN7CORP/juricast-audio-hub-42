@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
@@ -75,13 +74,12 @@ const FocusedMode = () => {
   const currentEpisodes = playMode === 'area' ? areaEpisodes : themeEpisodes;
   const currentLoading = playMode === 'area' ? loadingEpisodes : loadingThemeEpisodes;
 
-  const handleStartFocusedMode = (episodes: PodcastEpisode[]) => {
-    const playlistEpisodes = isShuffled ? shuffleArray([...episodes]) : episodes;
-    enableFocusedMode(playlistEpisodes, 0);
-    if (playlistEpisodes.length > 0) {
-      play(playlistEpisodes[0]);
+  // Reset selectedTheme when playMode changes to 'area'
+  React.useEffect(() => {
+    if (playMode === 'area') {
+      setSelectedTheme(null);
     }
-  };
+  }, [playMode]);
 
   const shuffleArray = (array: PodcastEpisode[]) => {
     const shuffled = [...array];
@@ -90,6 +88,14 @@ const FocusedMode = () => {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
+  };
+
+  const handleStartFocusedMode = (episodes: PodcastEpisode[]) => {
+    const playlistEpisodes = isShuffled ? shuffleArray([...episodes]) : episodes;
+    enableFocusedMode(playlistEpisodes, 0);
+    if (playlistEpisodes.length > 0) {
+      play(playlistEpisodes[0]);
+    }
   };
 
   const handleNextEpisode = () => {
@@ -275,7 +281,11 @@ const FocusedMode = () => {
                 <h2 className="text-xl sm:text-2xl font-bold">
                   {areas.find((a) => a.slug === selectedArea)?.name}
                 </h2>
-                <Button variant="outline" onClick={() => setSelectedArea(null)}>
+                <Button variant="outline" onClick={() => {
+                  setSelectedArea(null);
+                  setSelectedTheme(null);
+                  setPlayMode('area');
+                }}>
                   Voltar
                 </Button>
               </div>
@@ -320,13 +330,20 @@ const FocusedMode = () => {
                   <h3 className="text-base sm:text-lg font-semibold">Escolha um Tema</h3>
                   {loadingThemes ? (
                     <div className="text-center py-4">Carregando temas...</div>
+                  ) : themes.length === 0 ? (
+                    <div className="text-center py-4 text-juricast-muted">
+                      Nenhum tema encontrado para esta área.
+                    </div>
                   ) : (
                     <div className="grid gap-2 max-h-60 overflow-y-auto">
                       {themes.map((theme) => (
                         <Button
                           key={theme.slug}
-                          variant="ghost"
-                          onClick={() => setSelectedTheme(theme.slug)}
+                          variant={selectedTheme === theme.slug ? "default" : "ghost"}
+                          onClick={() => {
+                            console.log("Selected theme:", theme.slug);
+                            setSelectedTheme(theme.slug);
+                          }}
                           className="justify-between h-auto p-3"
                         >
                           <div className="text-left">
@@ -382,6 +399,11 @@ const FocusedMode = () => {
                   <h4 className="font-medium text-sm flex items-center gap-2">
                     <List className="w-4 h-4" />
                     Próximos Episódios
+                    {playMode === 'theme' && selectedTheme && (
+                      <span className="text-juricast-accent">
+                        - {themes.find(t => t.slug === selectedTheme)?.name}
+                      </span>
+                    )}
                   </h4>
                   {currentEpisodes.slice(0, 5).map((episode, index) => (
                     <Card key={episode.id} className="p-3">
@@ -403,6 +425,18 @@ const FocusedMode = () => {
                       E mais {currentEpisodes.length - 5} episódios...
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Debug info for theme selection */}
+              {playMode === 'theme' && (
+                <div className="text-xs text-juricast-muted">
+                  <p>Modo: {playMode}</p>
+                  <p>Área selecionada: {selectedArea}</p>
+                  <p>Tema selecionado: {selectedTheme || 'Nenhum'}</p>
+                  <p>Temas carregados: {themes.length}</p>
+                  <p>Episódios do tema: {themeEpisodes.length}</p>
+                  <p>Carregando episódios do tema: {loadingThemeEpisodes ? 'Sim' : 'Não'}</p>
                 </div>
               )}
             </motion.div>
