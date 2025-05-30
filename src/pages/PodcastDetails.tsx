@@ -133,7 +133,7 @@ const PodcastDetails = () => {
     }
   };
   return <MainLayout>
-      <motion.div initial="hidden" animate="visible" variants={fadeIn} className="md:px-0 px-[6px]">
+      <motion.div initial="hidden" animate="visible" variants={fadeIn} className="md:px-0 px-0">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center">
             <motion.div whileHover={{
