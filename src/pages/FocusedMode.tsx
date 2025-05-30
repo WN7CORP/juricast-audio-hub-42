@@ -3,20 +3,23 @@ import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import { useFocusedMode } from '@/context/FocusedModeContext';
 import { useAudioPlayer } from '@/context/AudioPlayerContext';
-import { getAllAreas, getEpisodesByArea } from '@/lib/podcast-service';
+import { getAllAreas, getEpisodesByArea, getThemesByArea, getEpisodesByTheme } from '@/lib/podcast-service';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, SkipForward, SkipBack, Settings, BookOpen, GraduationCap, List, Shuffle, FileText, X, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Settings, BookOpen, GraduationCap, List, Shuffle, FileText, X, Volume2, VolumeX, Clock, Hash, ChevronRight, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { PodcastEpisode, AreaCard } from '@/lib/types';
+import { PodcastEpisode, AreaCard, ThemeCard } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 
 const FocusedMode = () => {
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<'juridico' | 'educativo' | null>(null);
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
+  const [playMode, setPlayMode] = useState<'area' | 'theme'>('area');
   const [isShuffled, setIsShuffled] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
+  const [showPlaylist, setShowPlaylist] = useState(false);
 
   const {
     isFocusedMode,
@@ -50,11 +53,26 @@ const FocusedMode = () => {
   const { data: areaEpisodes = [], isLoading: loadingEpisodes } = useQuery({
     queryKey: ['areaEpisodes', selectedArea],
     queryFn: () => selectedArea ? getEpisodesByArea(selectedArea) : Promise.resolve([]),
+    enabled: !!selectedArea && playMode === 'area'
+  });
+
+  const { data: themes = [], isLoading: loadingThemes } = useQuery({
+    queryKey: ['themes', selectedArea],
+    queryFn: () => selectedArea ? getThemesByArea(selectedArea) : Promise.resolve([]),
     enabled: !!selectedArea
+  });
+
+  const { data: themeEpisodes = [], isLoading: loadingThemeEpisodes } = useQuery({
+    queryKey: ['themeEpisodes', selectedTheme, selectedArea],
+    queryFn: () => selectedTheme && selectedArea ? getEpisodesByTheme(selectedTheme, selectedArea) : Promise.resolve([]),
+    enabled: !!selectedTheme && !!selectedArea && playMode === 'theme'
   });
 
   const juridicoAreas = areas.filter(area => area.category === 'juridico');
   const educativoAreas = areas.filter(area => area.category === 'educativo');
+
+  const currentEpisodes = playMode === 'area' ? areaEpisodes : themeEpisodes;
+  const currentLoading = playMode === 'area' ? loadingEpisodes : loadingThemeEpisodes;
 
   const handleStartFocusedMode = (episodes: PodcastEpisode[]) => {
     const playlistEpisodes = isShuffled ? shuffleArray([...episodes]) : episodes;
@@ -106,6 +124,7 @@ const FocusedMode = () => {
   };
 
   const currentEpisode = currentPlaylist[currentEpisodeIndex];
+  const nextEpisodes = currentPlaylist.slice(currentEpisodeIndex + 1, currentEpisodeIndex + 4);
 
   if (!isFocusedMode) {
     return (
@@ -140,6 +159,7 @@ const FocusedMode = () => {
               initial="hidden"
               animate="visible"
             >
+              {/* ... keep existing code (category cards) */}
               <motion.div variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}>
                 <Card
                   className="p-4 sm:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 border-juricast-card/20 bg-gradient-to-br from-blue-50/10 to-blue-100/10"
@@ -244,8 +264,8 @@ const FocusedMode = () => {
             </motion.div>
           )}
 
-          {/* Episode List and Start */}
-          {selectedArea && areaEpisodes.length > 0 && (
+          {/* Play Mode Selection */}
+          {selectedArea && !selectedTheme && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -260,55 +280,131 @@ const FocusedMode = () => {
                 </Button>
               </div>
 
+              {/* Mode Selection */}
               <Card className="p-4 sm:p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-base sm:text-lg font-semibold">Configurações de Reprodução</h3>
-                    <p className="text-xs sm:text-sm text-juricast-muted">
-                      {areaEpisodes.length} episódios serão reproduzidos em sequência
-                    </p>
-                  </div>
+                <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+                  <Filter className="w-5 h-5" />
+                  Modo de Reprodução
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-4">
                   <Button
-                    variant={isShuffled ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setIsShuffled(!isShuffled)}
-                    className="gap-2 w-full sm:w-auto"
+                    variant={playMode === 'area' ? "default" : "outline"}
+                    onClick={() => setPlayMode('area')}
+                    className="h-auto p-4 justify-start text-left"
                   >
-                    <Shuffle className="w-4 h-4" />
-                    {isShuffled ? "Aleatório" : "Sequencial"}
-                  </Button>
-                </div>
-
-                <Button
-                  onClick={() => handleStartFocusedMode(areaEpisodes)}
-                  className="w-full h-12 text-base sm:text-lg bg-gradient-to-r from-juricast-accent to-juricast-accent/90"
-                  disabled={loadingEpisodes}
-                >
-                  <Play className="w-5 h-5 mr-2" />
-                  Iniciar Modo Focado
-                </Button>
-              </Card>
-
-              <div className="space-y-2">
-                {areaEpisodes.slice(0, 5).map((episode, index) => (
-                  <Card key={episode.id} className="p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-juricast-accent/10 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium flex-shrink-0">
-                        {index + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium truncate text-sm sm:text-base">{episode.titulo}</h4>
-                        <p className="text-xs sm:text-sm text-juricast-muted">{episode.area}</p>
+                    <div>
+                      <div className="font-medium">Por Área</div>
+                      <div className="text-xs opacity-70">
+                        Todos os episódios da área em sequência
                       </div>
                     </div>
-                  </Card>
-                ))}
-                {areaEpisodes.length > 5 && (
-                  <div className="text-center text-xs sm:text-sm text-juricast-muted py-2">
-                    E mais {areaEpisodes.length - 5} episódios...
+                  </Button>
+                  <Button
+                    variant={playMode === 'theme' ? "default" : "outline"}
+                    onClick={() => setPlayMode('theme')}
+                    className="h-auto p-4 justify-start text-left"
+                  >
+                    <div>
+                      <div className="font-medium">Por Tema</div>
+                      <div className="text-xs opacity-70">
+                        Escolha um tema específico
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              </Card>
+
+              {/* Theme Selection (if theme mode) */}
+              {playMode === 'theme' && (
+                <Card className="p-4 sm:p-6 space-y-4">
+                  <h3 className="text-base sm:text-lg font-semibold">Escolha um Tema</h3>
+                  {loadingThemes ? (
+                    <div className="text-center py-4">Carregando temas...</div>
+                  ) : (
+                    <div className="grid gap-2 max-h-60 overflow-y-auto">
+                      {themes.map((theme) => (
+                        <Button
+                          key={theme.slug}
+                          variant="ghost"
+                          onClick={() => setSelectedTheme(theme.slug)}
+                          className="justify-between h-auto p-3"
+                        >
+                          <div className="text-left">
+                            <div className="font-medium">{theme.name}</div>
+                            <div className="text-xs text-juricast-muted">
+                              {theme.episodeCount} episódios
+                            </div>
+                          </div>
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              )}
+
+              {/* Start Player (for area mode or after theme selection) */}
+              {((playMode === 'area' && currentEpisodes.length > 0) || 
+                (playMode === 'theme' && selectedTheme && currentEpisodes.length > 0)) && (
+                <Card className="p-4 sm:p-6 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-base sm:text-lg font-semibold">Configurações de Reprodução</h3>
+                      <p className="text-xs sm:text-sm text-juricast-muted">
+                        {currentEpisodes.length} episódios {playMode === 'theme' ? `do tema "${themes.find(t => t.slug === selectedTheme)?.name}"` : 'da área'} serão reproduzidos
+                      </p>
+                    </div>
+                    <Button
+                      variant={isShuffled ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setIsShuffled(!isShuffled)}
+                      className="gap-2 w-full sm:w-auto"
+                    >
+                      <Shuffle className="w-4 h-4" />
+                      {isShuffled ? "Aleatório" : "Sequencial"}
+                    </Button>
+                  </div>
+
+                  <Button
+                    onClick={() => handleStartFocusedMode(currentEpisodes)}
+                    className="w-full h-12 text-base sm:text-lg bg-gradient-to-r from-juricast-accent to-juricast-accent/90"
+                    disabled={currentLoading}
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    Iniciar Modo Focado
+                  </Button>
+                </Card>
+              )}
+
+              {/* Episode Preview */}
+              {currentEpisodes.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm flex items-center gap-2">
+                    <List className="w-4 h-4" />
+                    Próximos Episódios
+                  </h4>
+                  {currentEpisodes.slice(0, 5).map((episode, index) => (
+                    <Card key={episode.id} className="p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-juricast-accent/10 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium flex-shrink-0">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium truncate text-sm sm:text-base">{episode.titulo}</h4>
+                          <p className="text-xs sm:text-sm text-juricast-muted">
+                            {episode.tema} • {episode.area}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                  {currentEpisodes.length > 5 && (
+                    <div className="text-center text-xs sm:text-sm text-juricast-muted py-2">
+                      E mais {currentEpisodes.length - 5} episódios...
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
           )}
         </motion.div>
@@ -324,18 +420,52 @@ const FocusedMode = () => {
         animate={{ opacity: 1 }}
         className="max-w-4xl mx-auto space-y-6 sm:px-6 lg:px-8 pb-20 px-[2px]"
       >
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Modo Focado Ativo</h1>
-            <p className="text-juricast-muted text-sm sm:text-base">
-              {currentPlaylist.length} episódios na playlist
-            </p>
+        {/* Enhanced Header with Details */}
+        <Card className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold">Modo Focado Ativo</h1>
+              <p className="text-juricast-muted text-sm sm:text-base">
+                {currentPlaylist.length} episódios na playlist
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowPlaylist(!showPlaylist)} size="sm">
+                <List className="w-4 h-4 mr-1" />
+                Playlist
+              </Button>
+              <Button variant="outline" onClick={disableFocusedMode} size="sm">
+                Sair
+              </Button>
+            </div>
           </div>
-          <Button variant="outline" onClick={disableFocusedMode} className="w-full sm:w-auto">
-            Sair do Modo Focado
-          </Button>
-        </div>
+
+          {/* Current Episode Info */}
+          {currentEpisode && (
+            <div className="grid sm:grid-cols-2 gap-4 p-4 bg-juricast-background/30 rounded-lg">
+              <div>
+                <h3 className="font-semibold text-juricast-accent mb-2">Episódio Atual</h3>
+                <p className="text-sm font-medium mb-1">{currentEpisode.titulo}</p>
+                <p className="text-xs text-juricast-muted">
+                  <strong>Área:</strong> {currentEpisode.area}
+                </p>
+                <p className="text-xs text-juricast-muted">
+                  <strong>Tema:</strong> {currentEpisode.tema}
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-juricast-accent mb-2">Progresso</h3>
+                <p className="text-sm mb-1">
+                  Episódio {currentEpisodeIndex + 1} de {currentPlaylist.length}
+                </p>
+                <div className="flex items-center gap-2 text-xs text-juricast-muted">
+                  <Clock className="w-3 h-3" />
+                  <span>{formatTime(state.currentTime)} / {formatTime(state.duration)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
 
         {/* Enhanced Player */}
         {currentEpisode && (
@@ -451,21 +581,41 @@ const FocusedMode = () => {
                 </div>
               </div>
 
-              {/* Show Description Button */}
-              <div className="flex justify-center">
+              {/* Action Buttons */}
+              <div className="flex justify-center gap-2">
                 <Button
                   variant="outline"
                   onClick={() => setShowDescription(!showDescription)}
                   className="gap-2 text-white"
+                  size="sm"
                 >
                   <FileText className="w-4 h-4" />
-                  {showDescription ? "Ocultar Descrição" : "Mostrar Descrição"}
+                  {showDescription ? "Ocultar" : "Descrição"}
                 </Button>
               </div>
+            </div>
+          </Card>
+        )}
 
-              <div className="text-center text-sm text-juricast-muted">
-                Episódio {currentEpisodeIndex + 1} de {currentPlaylist.length}
-              </div>
+        {/* Next Episodes Preview */}
+        {nextEpisodes.length > 0 && (
+          <Card className="p-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <Hash className="w-4 h-4" />
+              Próximos Episódios
+            </h3>
+            <div className="space-y-2">
+              {nextEpisodes.map((episode, index) => (
+                <div key={episode.id} className="flex items-center gap-3 p-2 rounded-lg bg-juricast-background/20">
+                  <div className="w-6 h-6 bg-juricast-accent/10 rounded-full flex items-center justify-center text-xs font-medium">
+                    {currentEpisodeIndex + index + 2}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{episode.titulo}</p>
+                    <p className="text-xs text-juricast-muted">{episode.tema}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </Card>
         )}
@@ -488,6 +638,72 @@ const FocusedMode = () => {
           </div>
         </Card>
       </motion.div>
+
+      {/* Playlist Overlay */}
+      <AnimatePresence>
+        {showPlaylist && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+            onClick={() => setShowPlaylist(false)}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 500 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-juricast-card rounded-t-2xl sm:rounded-2xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto my-[42px]"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Playlist Completa</h3>
+                <Button variant="ghost" size="sm" onClick={() => setShowPlaylist(false)}>
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {currentPlaylist.map((episode, index) => (
+                  <div 
+                    key={episode.id} 
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg transition-colors",
+                      index === currentEpisodeIndex 
+                        ? "bg-juricast-accent/20 border border-juricast-accent/30" 
+                        : "bg-juricast-background/20 hover:bg-juricast-background/30"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                      index === currentEpisodeIndex 
+                        ? "bg-juricast-accent text-white" 
+                        : "bg-juricast-accent/10 text-juricast-muted"
+                    )}>
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "font-medium truncate text-sm",
+                        index === currentEpisodeIndex ? "text-white" : "text-white/80"
+                      )}>
+                        {episode.titulo}
+                      </p>
+                      <p className="text-xs text-juricast-muted">{episode.tema} • {episode.area}</p>
+                    </div>
+                    {index === currentEpisodeIndex && (
+                      <div className="text-juricast-accent">
+                        <Play className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Description Overlay */}
       <AnimatePresence>
