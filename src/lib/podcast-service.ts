@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PodcastEpisode, UserProgress, UserFavorite, AreaCard, ThemeCard, SupabaseEpisode } from "./types";
 
@@ -23,7 +24,7 @@ export function getUserIP() {
   return localStorage.getItem(USER_IP_KEY) || 'anonymous';
 }
 
-// Get all podcast episodes from JURIFY table
+// Get all podcast episodes from JURIFY table - ORDERED BY SEQUENCIA
 export async function getAllEpisodes(): Promise<PodcastEpisode[]> {
   try {
     const { data, error } = await supabase
@@ -51,7 +52,7 @@ function ensureTagsAreArrays(episodes: any[]): SupabaseEpisode[] {
   }));
 }
 
-// Get episodes by area (category) - IMPROVED with better matching
+// Get episodes by area (category) - ORDERED BY SEQUENCIA
 export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]> {
   try {
     if (!area) return [];
@@ -95,7 +96,7 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
         .select('*')
         .not('area', 'ilike', '%artigos comentados%')
         .not('area', 'ilike', '%dicas oab%')
-        .order('data', { ascending: false });
+        .order('sequencia', { ascending: true });
       
       data = result.data;
       error = result.error;
@@ -108,7 +109,7 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
           .from('JURIFY')
           .select('*')
           .ilike('area', `%${variation}%`)
-          .order('data', { ascending: false });
+          .order('sequencia', { ascending: true });
         
         if (result.data?.length) {
           data = result.data;
@@ -132,7 +133,7 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
   }
 }
 
-// Get episodes by theme
+// Get episodes by theme - ORDERED BY SEQUENCIA
 export async function getEpisodesByTheme(theme: string, area: string): Promise<PodcastEpisode[]> {
   try {
     // Format the theme string to match how it might be stored in the database
@@ -202,7 +203,7 @@ export async function getEpisodeById(id: number): Promise<PodcastEpisode | null>
   }
 }
 
-// Get all unique areas with episode counts and categorization - IMPROVED
+// Get all unique areas with episode counts and categorization
 export async function getAllAreas(): Promise<AreaCard[]> {
   try {
     const { data, error } = await supabase
@@ -252,7 +253,7 @@ export async function getAllAreas(): Promise<AreaCard[]> {
   }
 }
 
-// Helper function to create slug from area name - IMPROVED
+// Helper function to create slug from area name
 function createSlugFromAreaName(areaName: string): string {
   return areaName
     .toLowerCase()
@@ -267,7 +268,7 @@ function createSlugFromAreaName(areaName: string): string {
     .replace(/[^a-z0-9-]/g, '');
 }
 
-// Helper function to categorize areas - IMPROVED
+// Helper function to categorize areas
 function getCategoryForArea(areaName: string): 'juridico' | 'educativo' | 'pratico' {
   const educativeAreas = [
     'Artigos comentados', 
@@ -284,7 +285,7 @@ function getCategoryForArea(areaName: string): 'juridico' | 'educativo' | 'prati
   ) ? 'educativo' : 'juridico';
 }
 
-// Get all themes for a specific area
+// Get all themes for a specific area - ORDERED BY SEQUENCIA
 export async function getThemesByArea(area: string): Promise<ThemeCard[]> {
   try {
     // Convert slug back to possible area names using same logic as getEpisodesByArea
@@ -369,7 +370,7 @@ function getThemeImage(themeName: string): string {
   return '/placeholder.svg'; // Fallback to placeholder
 }
 
-// Get featured episodes (most recent from each area)
+// Get featured episodes (most recent from each area) - ORDERED BY SEQUENCIA
 export async function getFeaturedEpisodes(): Promise<PodcastEpisode[]> {
   return getAllEpisodes().then(episodes => {
     // Group episodes by area
@@ -381,23 +382,22 @@ export async function getFeaturedEpisodes(): Promise<PodcastEpisode[]> {
       return acc;
     }, {});
     
-    // Get the most recent episode from each area
+    // Get the first episode from each area (they're already ordered by sequencia)
     const featuredEpisodes = Object.values(episodesByArea)
       .map(areaEpisodes => areaEpisodes[0])
-      .sort((a, b) => (b.sequencia || '').localeCompare(a.sequencia || ''))
       .slice(0, 6);
       
     return featuredEpisodes;
   });
 }
 
-// Get recent episodes - IMPROVED with date sorting
+// Get recent episodes - ORDERED BY SEQUENCIA
 export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
   try {
     const { data, error } = await supabase
       .from('JURIFY')
       .select('*')
-      .order('data', { ascending: false })
+      .order('sequencia', { ascending: false })
       .limit(20);
     
     if (error) {
