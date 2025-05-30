@@ -29,7 +29,7 @@ export async function getAllEpisodes(): Promise<PodcastEpisode[]> {
     const { data, error } = await supabase
       .from('JURIFY')
       .select('*')
-      .order('sequencia', { ascending: true, nullsLast: true });
+      .order('sequencia', { ascending: true, nullsFirst: false });
     
     if (error) {
       console.error("Error fetching episodes:", error);
@@ -102,7 +102,7 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
         .select('*')
         .not('area', 'ilike', '%artigos comentados%')
         .not('area', 'ilike', '%dicas oab%')
-        .order('sequencia', { ascending: true, nullsLast: true });
+        .order('sequencia', { ascending: true, nullsFirst: false });
       
       data = result.data;
       error = result.error;
@@ -115,7 +115,7 @@ export async function getEpisodesByArea(area: string): Promise<PodcastEpisode[]>
           .from('JURIFY')
           .select('*')
           .ilike('area', `%${variation}%`)
-          .order('sequencia', { ascending: true, nullsLast: true });
+          .order('sequencia', { ascending: true, nullsFirst: false });
         
         if (result.data?.length) {
           data = result.data;
@@ -167,7 +167,7 @@ export async function getEpisodesByTheme(theme: string, area: string): Promise<P
       .select('*')
       .ilike('tema', `%${formattedTheme}%`)
       .ilike('area', `%${formattedArea}%`)
-      .order('sequencia', { ascending: true, nullsLast: true });
+      .order('sequencia', { ascending: true, nullsFirst: false });
     
     if (error) {
       console.error(`Error fetching episodes for theme ${theme}:`, error);
@@ -411,14 +411,13 @@ export async function getFeaturedEpisodes(): Promise<PodcastEpisode[]> {
   });
 }
 
-// Get recent episodes - ORDERED BY DATA (most recent first)
+// Get recent episodes - ORDERED BY ID (most recent first) since data column may not exist
 export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
   try {
     const { data, error } = await supabase
       .from('JURIFY')
       .select('*')
-      .not('data', 'is', null)
-      .order('data', { ascending: false, nullsLast: true })
+      .order('id', { ascending: false, nullsFirst: false })
       .limit(20);
     
     if (error) {
@@ -426,14 +425,12 @@ export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
       throw error;
     }
 
-    // Additional sort by date to ensure proper ordering
+    // Sort by ID in descending order (assuming higher ID = more recent)
     const sortedData = (data || []).sort((a, b) => {
-      const dateA = new Date(a.data || '1900-01-01');
-      const dateB = new Date(b.data || '1900-01-01');
-      return dateB.getTime() - dateA.getTime();
+      return b.id - a.id;
     });
 
-    console.log("📅 Recent episodes ordered by date:", sortedData.length);
+    console.log("📅 Recent episodes ordered by ID:", sortedData.length);
     return formatEpisodes(ensureTagsAreArrays(sortedData));
   } catch (error) {
     console.error("Error in getRecentEpisodes:", error);
