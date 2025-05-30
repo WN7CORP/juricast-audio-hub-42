@@ -17,14 +17,18 @@ const Index = () => {
     isLoading: loadingInProgress
   } = useQuery({
     queryKey: ['inProgressEpisodes'],
-    queryFn: getInProgressEpisodes
+    queryFn: getInProgressEpisodes,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    cacheTime: 10 * 60 * 1000 // Keep in cache for 10 minutes
   });
   const {
     data: recentEpisodes = [],
     isLoading: loadingRecent
   } = useQuery({
     queryKey: ['recentEpisodes'],
-    queryFn: getRecentEpisodes
+    queryFn: getRecentEpisodes,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    cacheTime: 10 * 60 * 1000 // Keep in cache for 10 minutes
   });
 
   // Save user IP on first load for persistent data
@@ -32,7 +36,7 @@ const Index = () => {
     saveUserIP();
   }, []);
 
-  // Load areas
+  // Load areas with improved caching
   useEffect(() => {
     const fetchAreas = async () => {
       const areasData = await getAllAreas();
