@@ -142,6 +142,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     // Create the audio element only if it doesn't exist
     if (!globalAudioElement) {
       globalAudioElement = new Audio();
+      globalAudioElement.preload = 'auto';
       console.log('Creating new global audio element');
     }
     
@@ -182,7 +183,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     fetchAndQueueRelatedEpisodes();
   }, [state.currentEpisode]);
 
-  // Handle audio source changes - IMPROVED
+  // Handle audio source changes - IMPROVED for first play
   useEffect(() => {
     if (state.currentEpisode && audioRef.current) {
       const audio = audioRef.current;
@@ -211,6 +212,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
             playPromise.catch((error) => {
               console.error('Error auto-playing audio:', error);
               dispatch({ type: 'PAUSE' });
+              // Show user-friendly message for autoplay issues
+              toast({
+                title: "Reprodução automática bloqueada",
+                description: "Clique no botão play para iniciar a reprodução.",
+                duration: 3000,
+              });
             });
           }
         }
@@ -254,7 +261,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
   }, [state.currentEpisode, state.isPlaying, queryClient]);
 
-  // Handle play/pause - IMPROVED
+  // Handle play/pause - IMPROVED with user interaction handling
   useEffect(() => {
     if (audioRef.current && state.currentEpisode) {
       const audio = audioRef.current;
@@ -265,6 +272,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           playPromise.catch((error) => {
             console.error('Error playing audio:', error);
             dispatch({ type: 'PAUSE' });
+            // Show user-friendly message for autoplay issues
+            toast({
+              title: "Erro de reprodução",
+              description: "Tente clicar no botão play novamente.",
+              duration: 3000,
+            });
           });
         }
       } else if (!state.isPlaying && !audio.paused) {
