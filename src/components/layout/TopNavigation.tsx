@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, Menu, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -74,20 +74,6 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
       transition={{ duration: 0.3 }}
     >
       <div className="flex items-center justify-between w-full max-w-full">
-        {isMobile && (
-          <button
-            onClick={onMenuToggle}
-            className="mr-4 p-2 rounded-lg hover:bg-juricast-card transition-colors"
-            aria-label="Toggle menu"
-          >
-            {showMobileMenu ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </button>
-        )}
-
         <div className="flex-1 max-w-md mx-auto relative">
           <form onSubmit={handleSearchSubmit} className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-juricast-muted h-4 w-4" />

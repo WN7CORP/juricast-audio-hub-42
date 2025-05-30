@@ -15,7 +15,7 @@ const Favorites = () => {
     queryKey: ['favoriteEpisodesByArea'],
     queryFn: getFavoriteEpisodesByArea,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-    cacheTime: 5 * 60 * 1000 // Keep in cache for 5 minutes
+    gcTime: 5 * 60 * 1000 // Keep in cache for 5 minutes (replaces cacheTime)
   });
 
   // Auto-expand first area when data loads
