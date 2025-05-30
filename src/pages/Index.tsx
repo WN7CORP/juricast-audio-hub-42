@@ -155,9 +155,7 @@ const Index = () => {
                 <BookOpen className="w-6 h-6 text-juricast-accent" />
                 <h2 className="text-xl sm:text-2xl font-bold">Áreas do Direito</h2>
               </div>
-              <Link to="/categoria/juridico" className="text-juricast-accent hover:underline text-sm">
-                Ver todas
-              </Link>
+              
             </motion.div>
 
             <motion.div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4" variants={containerVariants}>
@@ -174,9 +172,7 @@ const Index = () => {
                 <GraduationCap className="w-6 h-6 text-juricast-accent" />
                 <h2 className="text-xl sm:text-2xl font-bold">Educação Jurídica</h2>
               </div>
-              <Link to="/categoria/educativo" className="text-juricast-accent hover:underline text-sm">
-                Ver todas
-              </Link>
+              
             </motion.div>
 
             <motion.div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4" variants={containerVariants}>
