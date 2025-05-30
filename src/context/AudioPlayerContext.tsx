@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
 import { AudioPlayerContextType, AudioPlayerState, PodcastEpisode } from '@/lib/types';
 import { saveEpisodeProgress, getEpisodesByArea } from '@/lib/podcast-service';
@@ -183,42 +182,52 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     fetchAndQueueRelatedEpisodes();
   }, [state.currentEpisode]);
 
-  // Handle audio source changes
+  // Handle audio source changes - IMPROVED
   useEffect(() => {
     if (state.currentEpisode && audioRef.current) {
+      const audio = audioRef.current;
+      
       // Only set src if it's different from current to prevent duplicate playback
-      if (audioRef.current.src !== state.currentEpisode.url_audio) {
-        audioRef.current.src = state.currentEpisode.url_audio;
-        audioRef.current.load(); // Explicitly load to avoid race conditions
+      if (audio.src !== state.currentEpisode.url_audio) {
+        audio.src = state.currentEpisode.url_audio;
+        audio.load();
+        
+        // Preload for faster loading
+        audio.preload = 'auto';
       }
       
-      audioRef.current.volume = state.isMuted ? 0 : state.volume;
-      audioRef.current.playbackRate = state.playbackRate;
+      audio.volume = state.isMuted ? 0 : state.volume;
+      audio.playbackRate = state.playbackRate;
       
       const handleLoadedMetadata = () => {
-        dispatch({ type: 'SET_DURATION', payload: audioRef.current?.duration || 0 });
+        dispatch({ type: 'SET_DURATION', payload: audio.duration || 0 });
+      };
+      
+      const handleCanPlayThrough = () => {
+        // Auto-play when audio is ready and state says it should be playing
+        if (state.isPlaying && audio.paused) {
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((error) => {
+              console.error('Error auto-playing audio:', error);
+              dispatch({ type: 'PAUSE' });
+            });
+          }
+        }
       };
       
       const handleTimeUpdate = () => {
-        if (audioRef.current) {
-          dispatch({ type: 'SET_CURRENT_TIME', payload: audioRef.current.currentTime });
-        }
+        dispatch({ type: 'SET_CURRENT_TIME', payload: audio.currentTime });
       };
       
       const handleEnded = () => {
         dispatch({ type: 'PAUSE' });
-        // Save progress as completed
         if (state.currentEpisode) {
-          saveEpisodeProgress(state.currentEpisode.id, 100, audioRef.current?.duration || 0);
-          queryClient.invalidateQueries({
-            queryKey: ['inProgressEpisodes']
-          });
-          queryClient.invalidateQueries({
-            queryKey: ['completedEpisodes']
-          });
+          saveEpisodeProgress(state.currentEpisode.id, 100, audio.duration || 0);
+          queryClient.invalidateQueries({ queryKey: ['inProgressEpisodes'] });
+          queryClient.invalidateQueries({ queryKey: ['completedEpisodes'] });
         }
         
-        // Play next in queue if available
         if (state.queue.length > 0) {
           const nextEpisode = state.queue[0];
           dispatch({ type: 'PLAY', payload: nextEpisode });
@@ -231,38 +240,38 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         }
       };
       
-      audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
-      audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
-      audioRef.current.addEventListener('ended', handleEnded);
-      
-      // Don't auto-play when just setting source, let components control that
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.addEventListener('canplaythrough', handleCanPlayThrough);
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('ended', handleEnded);
       
       return () => {
-        if (audioRef.current) {
-          audioRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
-          audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
-          audioRef.current.removeEventListener('ended', handleEnded);
-        }
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.removeEventListener('canplaythrough', handleCanPlayThrough);
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('ended', handleEnded);
       };
     }
-  }, [state.currentEpisode, queryClient]);
+  }, [state.currentEpisode, state.isPlaying, queryClient]);
 
-  // Handle play/pause
+  // Handle play/pause - IMPROVED
   useEffect(() => {
-    if (audioRef.current) {
-      if (state.isPlaying) {
-        const playPromise = audioRef.current.play();
+    if (audioRef.current && state.currentEpisode) {
+      const audio = audioRef.current;
+      
+      if (state.isPlaying && audio.paused) {
+        const playPromise = audio.play();
         if (playPromise !== undefined) {
           playPromise.catch((error) => {
             console.error('Error playing audio:', error);
             dispatch({ type: 'PAUSE' });
           });
         }
-      } else {
-        audioRef.current.pause();
+      } else if (!state.isPlaying && !audio.paused) {
+        audio.pause();
       }
     }
-  }, [state.isPlaying]);
+  }, [state.isPlaying, state.currentEpisode]);
 
   // Handle volume changes
   useEffect(() => {

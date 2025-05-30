@@ -379,7 +379,6 @@ export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
       .from('JURIFY')
       .select('*')
       .order('data', { ascending: false })
-      .order('sequencia', { ascending: false })
       .limit(20);
     
     if (error) {

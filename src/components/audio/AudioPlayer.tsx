@@ -9,12 +9,14 @@ interface AudioPlayerProps {
   title: string;
   thumbnail?: string;
   episodeId?: number;
+  onNextEpisode?: () => void;
 }
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
   src,
   title,
   thumbnail,
-  episodeId
+  episodeId,
+  onNextEpisode
 }) => {
   const {
     state,
@@ -188,47 +190,64 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
             {/* Professional control buttons */}
             <div className="flex justify-center items-center gap-4 mb-6">
-              <motion.button onClick={() => skipBackward(10)} className="w-12 h-12 flex items-center justify-center rounded-full bg-juricast-background/30 hover:bg-juricast-background/50 backdrop-blur-sm border border-juricast-card/30 transition-colors" whileHover={{
-              scale: 1.1
-            }} whileTap={{
-              scale: 0.9
-            }}>
+              <motion.button
+                onClick={() => skipBackward(10)}
+                className="w-12 h-12 flex items-center justify-center rounded-full bg-juricast-background/30 hover:bg-juricast-background/50 backdrop-blur-sm border border-juricast-card/30 transition-colors"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
                 <SkipBack size={20} />
               </motion.button>
               
-              <motion.button onClick={handlePlayPause} className="w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-r from-juricast-accent to-juricast-accent/90 text-white shadow-lg hover:shadow-xl transition-all" whileHover={{
-              scale: 1.05
-            }} whileTap={{
-              scale: 0.95
-            }}>
+              <motion.button
+                onClick={handlePlayPause}
+                className="w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-r from-juricast-accent to-juricast-accent/90 text-white shadow-lg hover:shadow-xl transition-all"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <AnimatePresence mode="wait">
-                  {isPlaying ? <motion.div key="pause" initial={{
-                  scale: 0
-                }} animate={{
-                  scale: 1
-                }} exit={{
-                  scale: 0
-                }}>
+                  {isPlaying ? (
+                    <motion.div
+                      key="pause"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                    >
                       <Pause size={24} />
-                    </motion.div> : <motion.div key="play" initial={{
-                  scale: 0
-                }} animate={{
-                  scale: 1
-                }} exit={{
-                  scale: 0
-                }}>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="play"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                    >
                       <Play size={24} className="ml-1" />
-                    </motion.div>}
+                    </motion.div>
+                  )}
                 </AnimatePresence>
               </motion.button>
               
-              <motion.button onClick={() => skipForward(10)} className="w-12 h-12 flex items-center justify-center rounded-full bg-juricast-background/30 hover:bg-juricast-background/50 backdrop-blur-sm border border-juricast-card/30 transition-colors" whileHover={{
-              scale: 1.1
-            }} whileTap={{
-              scale: 0.9
-            }}>
+              <motion.button
+                onClick={() => skipForward(10)}
+                className="w-12 h-12 flex items-center justify-center rounded-full bg-juricast-background/30 hover:bg-juricast-background/50 backdrop-blur-sm border border-juricast-card/30 transition-colors"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
                 <SkipForward size={20} />
               </motion.button>
+
+              {/* Botão Próximo Episódio */}
+              {onNextEpisode && (
+                <motion.button
+                  onClick={onNextEpisode}
+                  className="px-4 py-2 bg-juricast-accent/20 hover:bg-juricast-accent/30 text-juricast-accent rounded-lg border border-juricast-accent/30 transition-colors text-sm font-medium"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Próximo
+                </motion.button>
+              )}
             </div>
 
             {/* Volume and playback controls */}
