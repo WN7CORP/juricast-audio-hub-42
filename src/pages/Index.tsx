@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Clock, BookOpen, GraduationCap, Star } from 'lucide-react';
 import { getAllEpisodes, getPopularEpisodes, getRecentEpisodes, getAllAreas } from '@/lib/podcast-service';
 import { cn } from '@/lib/utils';
+import { PodcastEpisode, AreaCard as AreaCardType } from '@/lib/types';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'popular' | 'recent'>('all');
@@ -40,10 +41,10 @@ const Index = () => {
     gcTime: 30 * 60 * 1000
   });
 
-  const juridicoAreas = areas.filter(area => area.category === 'juridico');
-  const educativoAreas = areas.filter(area => area.category === 'educativo');
+  const juridicoAreas = areas.filter((area: AreaCardType) => area.category === 'juridico');
+  const educativoAreas = areas.filter((area: AreaCardType) => area.category === 'educativo');
 
-  const getCurrentEpisodes = () => {
+  const getCurrentEpisodes = (): PodcastEpisode[] => {
     switch (activeTab) {
       case 'popular':
         return popularEpisodes;
@@ -209,7 +210,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {episodes.map((episode) => (
+                  {episodes.map((episode: PodcastEpisode) => (
                     <PodcastCard key={episode.id} episode={episode} />
                   ))}
                 </div>
@@ -229,7 +230,7 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {juridicoAreas.slice(0, 6).map((area) => (
+              {juridicoAreas.slice(0, 6).map((area: AreaCardType) => (
                 <AreaCard key={area.id} area={area} />
               ))}
             </div>
@@ -247,7 +248,7 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {educativoAreas.slice(0, 6).map((area) => (
+              {educativoAreas.slice(0, 6).map((area: AreaCardType) => (
                 <AreaCard key={area.id} area={area} />
               ))}
             </div>

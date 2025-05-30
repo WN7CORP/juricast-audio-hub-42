@@ -411,6 +411,28 @@ export async function getRecentEpisodes(): Promise<PodcastEpisode[]> {
   }
 }
 
+// Get popular episodes - NEW function
+export async function getPopularEpisodes(): Promise<PodcastEpisode[]> {
+  try {
+    const { data, error } = await supabase
+      .from('JURIFY')
+      .select('*')
+      .order('curtidas', { ascending: false })
+      .order('sequencia', { ascending: true })
+      .limit(20);
+    
+    if (error) {
+      console.error("Error fetching popular episodes:", error);
+      throw error;
+    }
+
+    return formatEpisodes(ensureTagsAreArrays(data || []));
+  } catch (error) {
+    console.error("Error in getPopularEpisodes:", error);
+    return [];
+  }
+}
+
 // Local storage for progress management
 export function saveEpisodeProgress(episodeId: number, progress: number, position: number = 0): void {
   try {
