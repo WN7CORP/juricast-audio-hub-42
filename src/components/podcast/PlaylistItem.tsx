@@ -1,11 +1,13 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Heart, Pause, Gavel, Book, Scale, File, Check, Clock } from 'lucide-react';
+import { Play, Heart, Pause, Scale, Book, File, Check, Clock } from 'lucide-react';
 import { PodcastEpisode } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toggleFavorite } from '@/lib/podcast-service';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
 
 interface PlaylistItemProps {
   episode: PodcastEpisode;
@@ -24,10 +26,20 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
   showProgress = false,
   showDate = false
 }) => {
+  const queryClient = useQueryClient();
+
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleFavorite(episode.id);
+    const newStatus = toggleFavorite(episode.id);
+    
+    queryClient.invalidateQueries({ queryKey: ['favoriteEpisodes'] });
+    queryClient.invalidateQueries({ queryKey: ['episode', episode.id] });
+    
+    toast({
+      title: newStatus ? "Adicionado aos favoritos" : "Removido dos favoritos",
+      description: newStatus ? "Este episódio foi adicionado à sua lista de favoritos." : "Este episódio foi removido da sua lista de favoritos."
+    });
   };
 
   const handlePlay = (e: React.MouseEvent) => {
@@ -40,9 +52,9 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
   const getAreaIcon = () => {
     const areaLower = episode.area.toLowerCase();
     if (areaLower.includes('civil')) return <Book size={16} className="text-juricast-accent" />;
-    if (areaLower.includes('penal') || areaLower.includes('criminal')) return <Gavel size={16} className="text-juricast-accent" />;
+    if (areaLower.includes('penal') || areaLower.includes('criminal')) return <Scale size={16} className="text-juricast-accent" />;
     if (areaLower.includes('constituc')) return <Scale size={16} className="text-juricast-accent" />;
-    return <File size={16} className="text-juricast-accent" />;
+    return <Scale size={16} className="text-juricast-accent" />;
   };
 
   // Check if episode is completed (100%)

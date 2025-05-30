@@ -20,8 +20,8 @@ const SupportContent: React.FC<SupportContentProps> = ({ description }) => {
         whileTap={{ scale: 0.98 }}
       >
         <FileText size={20} className="text-juricast-accent" />
-        <span className="font-medium">Mostrar Conteúdo de Apoio</span>
-        {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        <span className="font-medium text-white">Mostrar Descrição</span>
+        {isOpen ? <ChevronUp size={20} className="text-white" /> : <ChevronDown size={20} className="text-white" />}
       </motion.button>
 
       <AnimatePresence>
@@ -34,8 +34,8 @@ const SupportContent: React.FC<SupportContentProps> = ({ description }) => {
             className="overflow-hidden"
           >
             <div className="mt-4 p-4 bg-juricast-background/30 rounded-lg border border-juricast-card/20">
-              <h3 className="font-semibold mb-3 text-juricast-accent">Conteúdo de Apoio</h3>
-              <div className="prose prose-sm max-w-none text-juricast-text prose-headings:text-juricast-text prose-strong:text-juricast-text prose-em:text-juricast-accent">
+              <h3 className="font-semibold mb-3 text-juricast-accent">Descrição do Episódio</h3>
+              <div className="prose prose-sm max-w-none text-white prose-headings:text-white prose-strong:text-white prose-em:text-juricast-accent">
                 <ReactMarkdown>{description}</ReactMarkdown>
               </div>
             </div>
