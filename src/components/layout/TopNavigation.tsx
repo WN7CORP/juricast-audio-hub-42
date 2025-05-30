@@ -92,6 +92,13 @@ const TopNavigation = () => {
     }
   };
 
+  const handleViewAllResults = () => {
+    if (searchQuery.trim()) {
+      setIsCommandOpen(false);
+      navigate(`/busca?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
   // Keyboard shortcut to open search
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -160,7 +167,7 @@ const TopNavigation = () => {
                 <div className="py-6 text-center text-sm">
                   <p>Nenhum episódio encontrado para "{searchQuery}"</p>
                   <button
-                    onClick={handleSearchSubmit}
+                    onClick={handleViewAllResults}
                     className="mt-2 text-juricast-accent hover:underline"
                   >
                     Ver todos os resultados
@@ -192,7 +199,7 @@ const TopNavigation = () => {
                 ))}
                 {searchResults.length === 10 && (
                   <CommandItem
-                    onSelect={handleSearchSubmit}
+                    onSelect={handleViewAllResults}
                     className="text-center text-juricast-accent hover:underline cursor-pointer"
                   >
                     Ver mais resultados...
